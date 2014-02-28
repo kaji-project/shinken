@@ -7,7 +7,7 @@ shinken (1.4-3) unstable; urgency=low
   * Remove folders created from package. Closes: #739791
   * Add a new uploader
 
- -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Thu, 27 Fev 2014 18:30:59 -0500
+ -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Thu, 27 Feb 2014 18:30:59 -0500
 
 shinken (1.4-2) unstable; urgency=low
 
