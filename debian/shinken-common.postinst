@@ -24,7 +24,6 @@ case "$1" in
       addgroup --system nagios
 
     ## Ensure /var/lib/shinken is ready
-    mkdir -p /var/lib/shinken
     chown -R shinken:shinken /var/lib/shinken
 
     ## Add shinken to nagios group
@@ -36,11 +35,9 @@ case "$1" in
     unset TMP
 
     ## Ensure /var/run/shinken is ready
-    mkdir -p /var/run/shinken
     chown -R shinken:shinken /var/run/shinken
 
     ## Ensure /var/log/shinken is ready
-    mkdir -p /var/log/shinken
     chown -R shinken:shinken /var/log/shinken
 
     ## Checks rights
