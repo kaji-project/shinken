@@ -22,9 +22,12 @@ override_dh_install:
 	rm debian/shinken-module-broker-webui/usr/share/shinken/htdocs/js/jquery.js
 	rm debian/shinken-module-broker-webui/usr/share/shinken/htdocs/font/FontAwesome.otf
 	rm debian/shinken-module-broker-webui/usr/share/shinken/htdocs/font/fontawesome-webfont.ttf
+	rm debian/shinken-common/usr/share/doc/shinken/doc/architecture.fla
+	rm debian/shinken-common/usr/share/doc/shinken/doc/architecture.swf
 	sed -i -r 's/^# Default-Start:     2 3 4 5/# Default-Start:/g' debian/shinken-common/etc/init.d/shinken
 	mkdir -p debian/shinken-common/etc/default/
 	cp debian/shinken-common.default debian/shinken-common/etc/default/shinken
+	cp debian/js-sources/* debian/shinken-module-broker-webui/usr/share/shinken/htdocs/js/
 	sed -i "s|\$$ETC\\$$|$(ETC)|g" debian/shinken-common/etc/default/shinken
 	sed -i "s|\$$VAR\\$$|$(VAR)|g" debian/shinken-common/etc/default/shinken
 	sed -i "s|\$$SCRIPTS_BIN\\$$|$(SCRIPTS_BIN)|g" debian/shinken-common/etc/default/shinken
