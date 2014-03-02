@@ -35,6 +35,7 @@ case "$1" in
     unset TMP
 
     ## Ensure /var/run/shinken is ready
+    mkdir -p /var/run/shinken
     chown -R shinken:shinken /var/run/shinken
 
     ## Ensure /var/log/shinken is ready

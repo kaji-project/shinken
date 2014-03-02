@@ -15,7 +15,7 @@ case "$1" in
     dpkg-statoverride --remove /var/lib/shinken
 
     ## Ensure /var/run/shinken is removed
-#    rm -rf /var/run/shinken || return 0
+    rm -rf /var/run/shinken || return 0
 #    rm -rf /var/lib/shinken || return 0
 
     ;;

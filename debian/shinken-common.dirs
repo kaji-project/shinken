@@ -1,3 +1,2 @@
 /var/lib/shinken
-/var/run/shinken
 /var/log/shinken
