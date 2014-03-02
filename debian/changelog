@@ -1,3 +1,10 @@
+shinken (1.4-4) unstable; urgency=medium
+
+  * Fix /var/run/shinken folder creation. Closes: #740438
+  * Fix WebUI postinst script. Closes: #740468
+
+ -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Sun, 02 Mar 2014 11:09:55 -0500
+
 shinken (1.4-3) unstable; urgency=low
 
   * Delete useless debconf files. Closes: #736395
