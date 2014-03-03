@@ -9,10 +9,10 @@ case "$1" in
   configure)
 
     # Make some links
-    ln -s /usr/share/shinken/htdocs /usr/lib/python2.7/dist-packages/shinken/webui/ 2&>1 || true
-    ln -s /usr/share/javascript/jquery/jquery.js /usr/share/shinken/htdocs/js/ 2&>1 || true
-    ln -s /usr/share/fonts/opentype/font-awesome/FontAwesome.otf /usr/share/shinken/htdocs/font/FontAwesome.otf 2&>1 || true
-    ln -s /usr/share/fonts/truetype/font-awesome/fontawesome-webfont.ttf /usr/share/shinken/htdocs/font/fontawesome-webfont.ttf 2&>1 || true
+    ln -s /usr/share/shinken/htdocs /usr/lib/python2.7/dist-packages/shinken/webui/ 2>&1 || true
+    ln -s /usr/share/javascript/jquery/jquery.js /usr/share/shinken/htdocs/js/ 2>&1 || true
+    ln -s /usr/share/fonts/opentype/font-awesome/FontAwesome.otf /usr/share/shinken/htdocs/font/FontAwesome.otf 2>&1 || true
+    ln -s /usr/share/fonts/truetype/font-awesome/fontawesome-webfont.ttf /usr/share/shinken/htdocs/font/fontawesome-webfont.ttf 2>&1 || true
 
     ;;
   abort-upgrade)
