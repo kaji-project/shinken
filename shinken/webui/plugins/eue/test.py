@@ -5,6 +5,7 @@ records = []
 con = Connection('localhost')
 db = con.shinken
 if not db:
+    app = None # app is not otherwise
     message = "Error : Unable to connect to mongo database"
     return {'app': app, 'eue_data': {}, 'message': message }
 
@@ -21,7 +22,7 @@ for feature in db.eue.find({'key': { '$regex': id } }).sort("start_time",1).limi
     for scenario,scenario_data in feature["scenarios"].items():
         if scenario_data["status"] == 0:
             succeed += 1
-        else
+        else:
             failed += 1
 
     total = succeed + failed
