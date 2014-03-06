@@ -1,0 +1,13 @@
+diff --git a/shinken/webui/plugins/eue/test.py b/shinken/webui/plugins/eue/test.py
+index 7589d17..46f6d59 100644
+--- a/shinken/webui/plugins/eue/test.py
++++ b/shinken/webui/plugins/eue/test.py
+@@ -7,7 +7,7 @@ db = con.shinken
+ if not db:
+     app = None # app is not otherwise
+     message = "Error : Unable to connect to mongo database"
+-    return {'app': app, 'eue_data': {}, 'message': message }
++#    return {'app': app, 'eue_data': {}, 'message': message }
+ 
+ parts = eueid.split(".")
+ parts.pop(0)
