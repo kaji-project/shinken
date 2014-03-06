@@ -31,6 +31,13 @@ override_dh_install:
 	sed -i "s|\$$SCRIPTS_BIN\\$$|$(SCRIPTS_BIN)|g" debian/shinken-common/etc/default/shinken
 	sed -i "s|\$$RUN\\$$|$(RUN)|g" debian/shinken-common/etc/default/shinken
 	sed -i "s|\$$LOG\\$$|$(LOG)|g" debian/shinken-common/etc/default/shinken
+	# Delete useless files with bad file name
+	rm -f debian/shinken-common/usr/share/doc/shinken/doc/source/_static/images/\ green_dot.16x16.png\?16\ 
+	rm -f debian/shinken-common/usr/share/doc/shinken/doc/source/_static/images/official/images/checkmark.png\}\}\ 
+	rm -f debian/shinken-common/usr/share/doc/shinken/doc/source/_static/images/rss\>http/slashdot.org/index.rss\ 5\ author\ date\ 1h\ 
+	rm -f debian/shinken-common/usr/share/doc/shinken/doc/source/_static/images/space/green_dot.16x16.png\?16\ 
+	rm -f debian/shinken-common/usr/share/doc/shinken/doc/source/_static/images/space/orange_dot.16x16.png\?16\ 
+	rm -f debian/shinken-common/usr/share/doc/shinken/doc/source/_static/images/space/red_dot.16x16.png\?16\ 
 
 override_dh_installinit:
 	dh_installinit --no-start --name=shinken
