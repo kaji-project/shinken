@@ -3,3 +3,5 @@
 12_fix_collectd_arbiter.patch
 13_fix_ndo_mysql.patch
 14_fix_fedora_init_shinken.patch
+15_fix_trigger_function.patch
+16_fix_perfdatas_parsing.patch

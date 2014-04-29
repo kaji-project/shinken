@@ -1,0 +1,13 @@
+diff --git a/shinken/trigger_functions.py b/shinken/trigger_functions.py
+index a5a56c1..193a3bb 100644
+--- a/shinken/trigger_functions.py
++++ b/shinken/trigger_functions.py
+@@ -179,7 +179,7 @@ def allperfs(obj_ref):
+     obj = get_object(obj_ref)
+     p = PerfDatas(obj.perf_data)
+     logger.debug("[trigger] I get all perfdatas")
+-    return dict([(metric_name, p[metric_name].value) for metric_name in p])
++    return dict([(metric.name, p[metric.name]) for metric in p])
+ 
+ 
+ @declared

@@ -1,0 +1,13 @@
+diff --git a/shinken/misc/perfdata.py b/shinken/misc/perfdata.py
+index a4beb88..d77152a 100755
+--- a/shinken/misc/perfdata.py
++++ b/shinken/misc/perfdata.py
+@@ -27,7 +27,7 @@ import re
+ from shinken.util import to_best_int_float
+ 
+ perfdata_split_pattern = re.compile('([^=]+=\S+)')
+-metric_pattern = re.compile('^([^=]+)=([\d\.\-eE]+)([\w\/%]*);?([\d\.\-eE:~@]+)?;?([\d\.\-eE:~@]+)?;?([\d\.\-eE]+)?;?([\d\.\-eE]+)?;?\s*')
++metric_pattern = re.compile('^([^=]+)=([\d\.\-\+eE]+)([\w\/%]*);?([\d\.\-\+eE:~@]+)?;?([\d\.\-\+eE:~@]+)?;?([\d\.\-\+eE]+)?;?([\d\.\-\+eE]+)?;?\s*')
+ 
+ 
+ # If we can return an int or a float, or None
