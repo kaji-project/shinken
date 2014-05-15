@@ -5,3 +5,4 @@
 14_fix_fedora_init_shinken.patch
 15_fix_trigger_function.patch
 16_fix_perfdatas_parsing.patch
+17_update_to_1.4.3-pre.patch
