@@ -1,3 +1,10 @@
+shinken (1.4.2-5) unstable; urgency=medium
+
+  * Fix bin path. LP: #1300394
+  * Vcs-Git & Vcs-browser
+
+ -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Mon, 02 Jun 2014 14:31:28 -0400
+
 shinken (1.4.2-4) unstable; urgency=medium
 
   * Update to 1.4.3-pre1
