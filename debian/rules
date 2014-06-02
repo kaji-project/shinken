@@ -3,7 +3,7 @@
 
 ETC=/etc/shinken/
 VAR=/var/lib/shinken/
-SCRIPTS_BIN=/usr/share/pyshared/shinken/bin/
+SCRIPTS_BIN=/usr/lib/python2.7/dist-packages/shinken/bin/
 RUN=/var/run/shinken/
 LOG=/var/log/shinken/
 
