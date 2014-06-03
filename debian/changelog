@@ -3,6 +3,9 @@ shinken (1.4.2-3) unstable; urgency=medium
   * Fix bin path. LP: #1300394
   * Vcs-Git & Vcs-browser
 
+  [ Sylvestre Ledru ]
+  * Silent 3 lintian errors. The sources are there.
+
  -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Mon, 02 Jun 2014 14:31:28 -0400
 
 shinken (1.4.2-2) unstable; urgency=medium

@@ -1,0 +1,4 @@
+# that is not true!
+shinken source: source-is-missing debian/missing-sources/detectmobilebrowser.js
+shinken source: source-is-missing shinken/webui/plugins/eltdetail/htdocs/js/dollar.js
+shinken source: source-is-missing shinken/webui/plugins/threedimpacts/htdocs/js/optimer_bold.typeface.js
