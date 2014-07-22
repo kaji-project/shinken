@@ -38,3 +38,6 @@ test/tmp/*dat
 docs/build
 docs/tools/media/
 docs/tools/pages/
+
+# debian
+.pc/
