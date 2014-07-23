@@ -12,6 +12,7 @@ License:        AGPLv3+
 Requires:       python 
 Requires:       python-pyro 
 Requires:       python-simplejson 
+Requires:       pynag
 Requires(post):  chkconfig
 Requires(preun): chkconfig
 # This is for /sbin/service
