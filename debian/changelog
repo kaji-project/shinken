@@ -1,3 +1,9 @@
+shinken (1.4.2-4) unstable; urgency=medium
+
+  * Fix package building. Closes: #755347
+
+ -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Tue, 29 Jul 2014 11:19:03 -0400
+
 shinken (1.4.2-3) unstable; urgency=medium
 
   * Fix bin path. LP: #1300394
