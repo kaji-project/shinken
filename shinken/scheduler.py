@@ -397,8 +397,7 @@ class Scheduler:
         # We do not just del them in the check list, but also in their service/host
         # We want id of lower than max_id - 2*max_checks
         if len(self.checks) > max_checks:
-            id_max = self.checks.keys()[-1]  # The max id is the last id
-                                            #: max is SO slow!
+            id_max = max(self.checks.keys())  # keys does not ensure sorted keys. Max is slow but we have no other way.
             to_del_checks = [c for c in self.checks.values() if c.id < id_max - max_checks]
             nb_checks_drops = len(to_del_checks)
             if nb_checks_drops > 0:
@@ -425,7 +424,7 @@ class Scheduler:
             b_lists.append(e['broks'])
         for broks in b_lists:
             if len(broks) > max_broks:
-                id_max = broks.keys()[-1]
+                id_max = max(broks.keys())
                 id_to_del_broks = [i for i in broks if i < id_max - max_broks]
                 nb_broks_drops = len(id_to_del_broks)
                 for i in id_to_del_broks:
@@ -434,7 +433,7 @@ class Scheduler:
                 nb_broks_drops = 0
 
         if len(self.actions) > max_actions:
-            id_max = self.actions.keys()[-1]
+            id_max = max(self.actions.keys())
             id_to_del_actions = [i for i in self.actions if i < id_max - max_actions]
             nb_actions_drops = len(id_to_del_actions)
             for i in id_to_del_actions:
@@ -1326,10 +1325,8 @@ class Scheduler:
 
         # Check maintenance periods
         for elt in [y for y in [x for x in self.hosts] + [x for x in self.services] if y.maintenance_period is not None]:
-            if not hasattr(elt, 'in_maintenance'):
-                setattr(elt, 'in_maintenance', False)
 
-            if not elt.in_maintenance:
+            if elt.in_maintenance is None:
                 if elt.maintenance_period.is_time_valid(now):
                     start_dt = elt.maintenance_period.get_next_valid_time_from_t(now)
                     end_dt = elt.maintenance_period.get_next_invalid_time_from_t(start_dt + 1) - 1
@@ -1341,7 +1338,7 @@ class Scheduler:
             else:
                 if not elt.in_maintenance in self.downtimes:
                     # the main downtimes has expired or was manually deleted
-                    elt.in_maintenance = False
+                    elt.in_maintenance = None
 
         #  Check the validity of contact downtimes
         for elt in self.contacts:
