@@ -1,3 +1,10 @@
+shinken (1.4.3-1) unstable; urgency=medium
+
+  * Fix control file. Closes: #755347
+  * Clean integrated upstream patches.
+
+ -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Wed, 06 Aug 2014 11:03:33 -0400
+
 shinken (1.4.2-3) unstable; urgency=medium
 
   * Fix bin path. LP: #1300394
