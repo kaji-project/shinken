@@ -1,3 +1,4 @@
+fix_packet_size_in_graphite_module.patch
 10_webui.patch
 11_shinken_init.patch
 12_fix_collectd_arbiter.patch
