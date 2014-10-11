@@ -7,15 +7,15 @@ Vcs-Git: git://anonscm.debian.org/pkg-shinken/shinken.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-shinken/shinken.git;a=summary
 Standards-Version: 3.9.5
 XS-Python-Version: >= 2.5, << 2.8
-Build-Depends: python, debhelper (>= 9), quilt, python-setuptools, po-debconf, python-sphinx
+Build-Depends: python, debhelper (>= 9), quilt, python-setuptools, po-debconf, python-sphinx, graphviz
 Homepage: http://www.shinken-monitoring.org
 
 Package: shinken
 Architecture: all
 Depends: ${misc:Depends}, shinken-common (= ${binary:Version}),
- shinken-module-webui, shinken-module-pickle-retention-file-generic,
- shinken-module-sqlitedb, shinken-module-auth-cfg-password 
-Suggests: shinken-doc, shinken-mod, shinken-pack
+ shinken-mod-webui, shinken-mod-pickle-retention-file-generic,
+ shinken-mod-sqlitedb, shinken-mod-auth-cfg-password
+Suggests: shinken-doc
 Description: Flexible monitoring tool - Meta-package
  This metapackage install a minimal and fully functionnal monitoring solution
  based on Shinken and its WebUI module.
@@ -31,7 +31,7 @@ Replaces: shinken-arbiter, shinken-broker, shinken-discovery,
  shinken-poller, shinken-reactionner, shinken-receiver,
  shinken-scheduler, shinken-core
 Depends: ${misc:Depends}, ${python:Depends}, python-pycurl, adduser
-Recommends: nagios-plugins-basic, bsd-mailx | mailx
+Recommends: monitoring-plugins-basic, bsd-mailx | mailx, python-cherrypy3
 Description: Flexible monitoring tool - Common files
  Common files for shinken monitoring.
  .
