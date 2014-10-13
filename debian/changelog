@@ -1,3 +1,9 @@
+shinken (2.0.3-2kaji0.2) unstable; urgency=medium
+
+  * Kaji release
+
+ -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Sun, 12 Oct 2014 23:25:42 -0400
+
 shinken (2.0.3-2) unstable; urgency=medium
 
   * Upload to unstable
