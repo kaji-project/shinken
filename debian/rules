@@ -26,3 +26,4 @@ make_dfsg:
 	find windows -name '*.exe' -o -name '*.dll' -delete
 	rm doc.old/architecture.fla
 	rm doc.old/architecture.swf
+	rm test/modules
