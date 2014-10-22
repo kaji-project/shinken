@@ -1,3 +1,9 @@
+shinken (1.4.4-1) unstable; urgency=medium
+
+  * Fix LiveStatus memory leak
+
+ -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Wed, 22 Oct 2014 17:29:16 -0400
+
 shinken (1.4.3-2) unstable; urgency=medium
 
   * Add graphite package size patch
