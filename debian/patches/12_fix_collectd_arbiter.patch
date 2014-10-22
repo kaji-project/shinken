@@ -1,8 +1,8 @@
-diff --git a/shinken/modules/collectd_arbiter.py b/shinken/modules/collectd_arbiter.py
-index f3faca6..441c55e 100644
---- a/shinken/modules/collectd_arbiter.py
-+++ b/shinken/modules/collectd_arbiter.py
-@@ -68,7 +68,6 @@ def get_instance(plugin):
+Index: shinken/shinken/modules/collectd_arbiter.py
+===================================================================
+--- shinken.orig/shinken/modules/collectd_arbiter.py
++++ shinken/shinken/modules/collectd_arbiter.py
+@@ -69,7 +69,6 @@ def get_instance(plugin):
          port = DEFAULT_PORT
  
      if hasattr(plugin, 'grouped_collectd_plugins'):
