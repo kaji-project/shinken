@@ -1,3 +1,9 @@
+shinken (1.4.4-2) unstable; urgency=medium
+
+  * Add Collectd fix
+
+ -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Tue, 04 Nov 2014 09:54:34 -0500
+
 shinken (1.4.4-1) unstable; urgency=medium
 
   * Fix LiveStatus memory leak
