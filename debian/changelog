@@ -1,3 +1,9 @@
+shinken (1.4.4-3) unstable; urgency=medium
+
+  * Fix collectd package
+
+ -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Wed, 03 Dec 2014 12:19:09 -0500
+
 shinken (1.4.4-2) unstable; urgency=medium
 
   * Add Collectd fix
