@@ -1,7 +1,6 @@
 #fix_packet_size_in_graphite_module.patch
 10_webui.patch
 11_shinken_init.patch
-12_fix_collectd_arbiter.patch
 13_fix_ndo_mysql.patch
 14_fix_fedora_init_shinken.patch
 15_fix_trigger_function.patch
