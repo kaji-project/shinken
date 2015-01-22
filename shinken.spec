@@ -7,7 +7,7 @@ Version:        2.0.3
 Release:        3kaji0.2
 URL:            http://www.%{name}-monitoring.org
 Source0:        http://www.%{name}-monitoring.org/pub/%{name}_%{version}.orig.tar.gz
-Source1:        shinken_%{version}-%{release}.debian.tar.xz
+Source1:        shinken_%{version}-*.debian.tar.xz
 License:        AGPLv3+
 Requires:       python 
 Requires:       python-pyro 
@@ -21,6 +21,7 @@ Requires:       sudo
 
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
+BuildRequires:  python-sphinx
 Group:          Application/System
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-buildroot
@@ -39,8 +40,8 @@ Summary: Shinken Common files
 Group:          Application/System
 #Requires: %{name} = %{version}-%{release}
 Requires:       python
-Requires:       python-pyro
-Requires:       python-simplejson
+Requires:       python-pycurl
+
 Requires(post):  chkconfig
 Requires(preun): chkconfig
 # This is for /sbin/service
