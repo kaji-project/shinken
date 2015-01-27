@@ -7,7 +7,7 @@ Version:        2.0.3
 Release:        3kaji0.2
 URL:            http://www.%{name}-monitoring.org
 Source0:        http://www.%{name}-monitoring.org/pub/%{name}_%{version}.orig.tar.gz
-Source1:        shinken_%{version}-*.debian.tar.xz
+Source1:        shinken_%{version}-%{release}.debian.tar.xz
 License:        AGPLv3+
 Requires:       python 
 Requires:       python-pyro 
@@ -21,7 +21,8 @@ Requires:       sudo
 
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
-BuildRequires:  python-sphinx
+BuildRequires:  graphviz
+#BuildRequires:  python-sphinx
 Group:          Application/System
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-buildroot
@@ -62,6 +63,7 @@ Group:          Application/System
 # Untar debian tarball
 tar vxf %{SOURCE1} 
 # Apply all patches
+ls .
 for patch_file in $(cat debian/patches/series | grep -v "^#")
 do
 %{__patch} -p1 < debian/patches/$patch_file
@@ -88,33 +90,29 @@ rm -rf %{buildroot}%{_sysconfdir}/%{name}/*
 cp -rf  debian/etc/*  %{buildroot}%{_sysconfdir}/%{name}/
 install -d -m0755 %{buildroot}/%{_mandir}/man8/
 install -p -m0644 manpages/manpages/* %{buildroot}/%{_mandir}/man8/
+install -d -m0755 %{buildroot}/usr/share/pyshared/shinken
+mv  %{buildroot}/var/lib/shinken/modules  %{buildroot}/usr/share/pyshared/shinken
 
-#install -d -m0755 %{buildroot}/%{_docdir}/%{name}
-#mv %{buildroot}/var/lib/shinken/doc/build/html %{buildroot}/%{_docdir}/%{name}
+# Clean useless
+rm -rf %{buildroot}%{_sysconfdir}/init.d/shinken*
 rm -rf %{buildroot}/var/lib/shinken/share/templates
 rm -rf %{buildroot}/var/lib/shinken/share/images
 rm -rf %{buildroot}/%{python_sitelib}/modules/
-
-install -d -m0755 %{buildroot}/usr/share/pyshared/shinken
-mv  %{buildroot}/var/lib/shinken/modules  %{buildroot}/usr/share/pyshared/shinken
 rm -rf %{buildroot}/var/lib/shinken/doc/
-
-rm -f %{buildroot}/etc/shinken/packs/.placeholder
-
+rm -rf %{buildroot}/etc/shinken/packs/.placeholder
 rm -rf %{buildroot}/var/lib/shinken/inventory/
 rm -rf %{buildroot}/var/lib/shinken/libexec/
 rm -rf %{buildroot}/var/lib/shinken/libexec/
-
 rm -rf %{buildroot}/%{_sysconfdir}/default/%{name}
 
 # init files
 install -d -m0755 %{buildroot}%{_initrddir}
-install -p -m0644 for_fedora/init.d/%{name}-arbiter %{buildroot}%{_initrddir}/%{name}-arbiter
-install -p -m0644 for_fedora/init.d/%{name}-scheduler %{buildroot}%{_initrddir}/%{name}-scheduler
-install -p -m0644 for_fedora/init.d/%{name}-poller %{buildroot}%{_initrddir}/%{name}-poller
-install -p -m0644 for_fedora/init.d/%{name}-broker %{buildroot}%{_initrddir}/%{name}-broker
-install -p -m0644 for_fedora/init.d/%{name}-reactionner %{buildroot}%{_initrddir}/%{name}-reactionner
-install -p -m0644 for_fedora/init.d/%{name}-receiver %{buildroot}%{_initrddir}/%{name}-receiver
+install -p -m0755 for_fedora/init.d/%{name}-arbiter %{buildroot}%{_initrddir}/%{name}-arbiter
+install -p -m0755 for_fedora/init.d/%{name}-scheduler %{buildroot}%{_initrddir}/%{name}-scheduler
+install -p -m0755 for_fedora/init.d/%{name}-poller %{buildroot}%{_initrddir}/%{name}-poller
+install -p -m0755 for_fedora/init.d/%{name}-broker %{buildroot}%{_initrddir}/%{name}-broker
+install -p -m0755 for_fedora/init.d/%{name}-reactionner %{buildroot}%{_initrddir}/%{name}-reactionner
+install -p -m0755 for_fedora/init.d/%{name}-receiver %{buildroot}%{_initrddir}/%{name}-receiver
 
 # logrotate
 install -d -m0755 %{buildroot}%{_sysconfdir}/logrotate.d
@@ -175,6 +173,7 @@ fi
 %{python_sitelib}/%{name}
 %{python_sitelib}/Shinken-*.egg-info
 /var/lib/shinken/cli/
+/usr/share/pyshared/shinken
 #%{_usr}/lib/%{name}/plugins
 #%doc etc/packs COPYING THANKS 
 %config(noreplace) %{_sysconfdir}/logrotate.d/%{name}
@@ -183,15 +182,13 @@ fi
 %attr(-,%{shinken_user} ,%{shinken_group}) %dir %{_localstatedir}/lib/%{name}
 %attr(-,%{shinken_user} ,%{shinken_group}) %dir %{_localstatedir}/run/%{name}
 # shinken
-%attr(0755,root,root) %{_initrddir}/%{name}
+%attr(0755,root,root) %{_initrddir}/%{name}*
 %{_bindir}/%{name}
-/usr/share/pyshared/shinken
 #man
 %{_mandir}/man8/%{name}*
 # shinken-discovery
 %{_bindir}/%{name}-discovery
 # arbiter
-%attr(0755,root,root) %{_initrddir}/%{name}-arbiter
 %{_bindir}/%{name}-arbiter
 #%config(noreplace) %{_sysconfdir}/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/shinken.cfg
@@ -205,27 +202,22 @@ fi
 %config(noreplace) %{_sysconfdir}/%{name}/arbiters/arbiter.cfg
 %config(noreplace) %{_sysconfdir}/%{name}/realms/realms.cfg
 #reactionner
-%attr(0755,root,root) %{_initrddir}/%{name}-reactionner
 %{_bindir}/%{name}-reactionner
 %config(noreplace) %{_sysconfdir}/%{name}/daemons/reactionnerd.ini
 %config(noreplace) %{_sysconfdir}/%{name}/reactionners/reactionner.cfg
 # scheduler
-%attr(0755,root,root) %{_initrddir}/%{name}-scheduler
 %{_bindir}/%{name}-scheduler
 %config(noreplace) %{_sysconfdir}/%{name}/daemons/schedulerd.ini
 %config(noreplace) %{_sysconfdir}/%{name}/schedulers/scheduler.cfg
 # poller
-%attr(0755,root,root) %{_initrddir}/%{name}-poller
 %{_bindir}/%{name}-poller
 %config(noreplace) %{_sysconfdir}/%{name}/daemons/pollerd.ini
 %config(noreplace) %{_sysconfdir}/%{name}/pollers/poller.cfg
 # broker
-%attr(0755,root,root) %{_initrddir}/%{name}-broker
 %{_bindir}/%{name}-broker
 %config(noreplace) %{_sysconfdir}/%{name}/daemons/brokerd.ini
 %config(noreplace) %{_sysconfdir}/%{name}/brokers/broker.cfg
 # receiver
-%attr(0755,root,root) %{_initrddir}/%{name}-receiver
 %{_bindir}/%{name}-receiver
 %config(noreplace) %{_sysconfdir}/%{name}/daemons/receiverd.ini
 %config(noreplace) %{_sysconfdir}/%{name}/receivers/receiver.cfg
