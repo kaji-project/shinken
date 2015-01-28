@@ -1,0 +1,6 @@
+deps_pip:
+  - sphinx
+distro:
+  - centos_6
+spec: shinken.spec
+debian: debian
