@@ -83,7 +83,7 @@ cd doc && make html
 #find %{buildroot} -size 0 -delete
 rm -rf %{buildroot}
 
-%{__python} setup.py install -O1 --root=%{buildroot} --install-scripts=%{_bindir} --install-lib=%{python_sitelib}  --owner %{shinken_user} --group %{shinken_group}
+%{__python} setup.py install -O1 --root=%{buildroot} --install-scripts=%{_sbindir} --install-lib=%{python_sitelib}  --owner %{shinken_user} --group %{shinken_group}
 
 install -d -m0755  %{buildroot}%{_sysconfdir}/%{name}/
 rm -rf %{buildroot}%{_sysconfdir}/%{name}/*
