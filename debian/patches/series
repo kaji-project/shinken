@@ -24,3 +24,4 @@
 0023-shinken-cli.patch
 fix_init_script_dependency.patch
 add_logevent_file
+fix_rpm_init_scripts
