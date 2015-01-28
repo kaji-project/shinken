@@ -85,6 +85,7 @@ rm -rf %{buildroot}
 install -d -m0755  %{buildroot}%{_sysconfdir}/%{name}/
 rm -rf %{buildroot}%{_sysconfdir}/%{name}/*
 cp -rf  debian/etc/*  %{buildroot}%{_sysconfdir}/%{name}/
+cp -rf  debian/kaji/etc/*  %{buildroot}%{_sysconfdir}/%{name}/
 install -d -m0755 %{buildroot}/%{_mandir}/man8/
 install -p -m0644 manpages/manpages/* %{buildroot}/%{_mandir}/man8/
 install -d -m0755 %{buildroot}/usr/share/pyshared/shinken
