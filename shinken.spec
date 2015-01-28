@@ -180,13 +180,13 @@ fi
 %attr(-,%{shinken_user} ,%{shinken_group}) %dir %{_localstatedir}/run/%{name}
 # shinken
 %attr(0755,root,root) %{_initrddir}/%{name}*
-%{_bindir}/%{name}
+%{_sbindir}/%{name}
 #man
 %{_mandir}/man8/%{name}*
 # shinken-discovery
-%{_bindir}/%{name}-discovery
+%{_sbindir}/%{name}-discovery
 # arbiter
-%{_bindir}/%{name}-arbiter
+%{_sbindir}/%{name}-arbiter
 #%config(noreplace) %{_sysconfdir}/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/shinken.cfg
 %config(noreplace) %{_sysconfdir}/%{name}/hosts/
@@ -199,23 +199,23 @@ fi
 %config(noreplace) %{_sysconfdir}/%{name}/arbiters/arbiter.cfg
 %config(noreplace) %{_sysconfdir}/%{name}/realms/realms.cfg
 #reactionner
-%{_bindir}/%{name}-reactionner
+%{_sbindir}/%{name}-reactionner
 %config(noreplace) %{_sysconfdir}/%{name}/daemons/reactionnerd.ini
 %config(noreplace) %{_sysconfdir}/%{name}/reactionners/reactionner.cfg
 # scheduler
-%{_bindir}/%{name}-scheduler
+%{_sbindir}/%{name}-scheduler
 %config(noreplace) %{_sysconfdir}/%{name}/daemons/schedulerd.ini
 %config(noreplace) %{_sysconfdir}/%{name}/schedulers/scheduler.cfg
 # poller
-%{_bindir}/%{name}-poller
+%{_sbindir}/%{name}-poller
 %config(noreplace) %{_sysconfdir}/%{name}/daemons/pollerd.ini
 %config(noreplace) %{_sysconfdir}/%{name}/pollers/poller.cfg
 # broker
-%{_bindir}/%{name}-broker
+%{_sbindir}/%{name}-broker
 %config(noreplace) %{_sysconfdir}/%{name}/daemons/brokerd.ini
 %config(noreplace) %{_sysconfdir}/%{name}/brokers/broker.cfg
 # receiver
-%{_bindir}/%{name}-receiver
+%{_sbindir}/%{name}-receiver
 %config(noreplace) %{_sysconfdir}/%{name}/daemons/receiverd.ini
 %config(noreplace) %{_sysconfdir}/%{name}/receivers/receiver.cfg
 
