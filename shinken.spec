@@ -7,7 +7,6 @@ Version:        2.0.3
 Release:        3kaji0.2
 URL:            http://www.%{name}-monitoring.org
 Source0:        http://www.%{name}-monitoring.org/pub/%{name}_%{version}.orig.tar.gz
-Source1:        shinken_%{version}-%{release}.debian.tar.xz
 License:        AGPLv3+
 Requires:       python 
 Requires:       python-pyro 
@@ -60,8 +59,6 @@ Group:          Application/System
 %prep
 %setup -q
 
-# Untar debian tarball
-tar vxf %{SOURCE1} 
 # Apply all patches
 ls .
 for patch_file in $(cat debian/patches/series | grep -v "^#")
