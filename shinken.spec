@@ -60,7 +60,6 @@ Group:          Application/System
 %setup -q
 
 # Apply all patches
-ls .
 for patch_file in $(cat debian/patches/series | grep -v "^#")
 do
 %{__patch} -p1 < debian/patches/$patch_file
