@@ -91,7 +91,6 @@ install -d -m0755 %{buildroot}/usr/share/pyshared/shinken
 mv  %{buildroot}/var/lib/shinken/modules  %{buildroot}/usr/share/pyshared/shinken
 
 # Clean useless
-rm -rf %{buildroot}%{_sysconfdir}/init.d/shinken*
 rm -rf %{buildroot}/var/lib/shinken/share/templates
 rm -rf %{buildroot}/var/lib/shinken/share/images
 rm -rf %{buildroot}/%{python_sitelib}/modules/
@@ -100,16 +99,6 @@ rm -rf %{buildroot}/etc/shinken/packs/.placeholder
 rm -rf %{buildroot}/var/lib/shinken/inventory/
 rm -rf %{buildroot}/var/lib/shinken/libexec/
 rm -rf %{buildroot}/var/lib/shinken/libexec/
-rm -rf %{buildroot}/%{_sysconfdir}/default/%{name}
-
-# init files
-install -d -m0755 %{buildroot}%{_initrddir}
-install -p -m0755 for_fedora/init.d/%{name}-arbiter %{buildroot}%{_initrddir}/%{name}-arbiter
-install -p -m0755 for_fedora/init.d/%{name}-scheduler %{buildroot}%{_initrddir}/%{name}-scheduler
-install -p -m0755 for_fedora/init.d/%{name}-poller %{buildroot}%{_initrddir}/%{name}-poller
-install -p -m0755 for_fedora/init.d/%{name}-broker %{buildroot}%{_initrddir}/%{name}-broker
-install -p -m0755 for_fedora/init.d/%{name}-reactionner %{buildroot}%{_initrddir}/%{name}-reactionner
-install -p -m0755 for_fedora/init.d/%{name}-receiver %{buildroot}%{_initrddir}/%{name}-receiver
 
 # logrotate
 install -d -m0755 %{buildroot}%{_sysconfdir}/logrotate.d
@@ -173,13 +162,14 @@ fi
 /usr/share/pyshared/shinken
 #%{_usr}/lib/%{name}/plugins
 #%doc etc/packs COPYING THANKS 
+%config(noreplace) %{_sysconfdir}/default/%{name}
 %config(noreplace) %{_sysconfdir}/logrotate.d/%{name}
 %config(noreplace) %{_sysconfdir}/tmpfiles.d/%{name}.conf
 %attr(-,%{shinken_user} ,%{shinken_group}) %dir %{_localstatedir}/log/%{name}
 %attr(-,%{shinken_user} ,%{shinken_group}) %dir %{_localstatedir}/lib/%{name}
 %attr(-,%{shinken_user} ,%{shinken_group}) %dir %{_localstatedir}/run/%{name}
 # shinken
-%attr(0755,root,root) %{_initrddir}/%{name}*
+%attr(0755,root,root) %{_sysconfdir}/init.d/%{name}*
 %{_sbindir}/%{name}
 #man
 %{_mandir}/man8/%{name}*
