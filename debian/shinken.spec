@@ -8,15 +8,16 @@ Release:        3kaji0.2
 URL:            http://www.%{name}-monitoring.org
 Source0:        http://www.%{name}-monitoring.org/pub/%{name}_%{version}.orig.tar.gz
 License:        AGPLv3+
-Requires:       python 
-Requires:       python-pyro 
-Requires:       python-simplejson 
+Requires:       python
+Requires:       python-pycurl
+Requires:       python-cherrypy
+Requires:       python-simplejson
 Requires(post):  chkconfig
 Requires(preun): chkconfig
 # This is for /sbin/service
 Requires(preun): initscripts
-Requires:       nmap 
-Requires:       sudo  
+#Requires:       nmap
+Requires:       sudo
 
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
@@ -27,12 +28,12 @@ Group:          Application/System
 BuildRoot:      %{_tmppath}/%{name}-%{version}-buildroot
 Buildarch:      noarch
 
-%description 
-Shinken is a new monitoring tool written in Python. 
-The main goal of Shinken is to allow users to have a fully flexible 
-architecture for their monitoring system that can easily scale to large 
+%description
+Shinken is a new monitoring tool written in Python.
+The main goal of Shinken is to allow users to have a fully flexible
+architecture for their monitoring system that can easily scale to large
 environments.
-Shinken also provide interfaces with NDODB and Merlin database, 
+Shinken also provide interfaces with NDODB and Merlin database,
 Livestatus connector Shinken does not include any human interfaces.
 
 %package common
@@ -70,7 +71,7 @@ find . -name '.gitignore' -exec rm -f {} \;
 
 
 %build
-#%{__python} setup.py build 
+#%{__python} setup.py build
 %{__python} manpages/generate_manpages.py
 cd doc && make html
 
@@ -125,7 +126,7 @@ getent passwd %{shinken_user} >/dev/null || useradd -r -g %{shinken_group} -d /h
 exit 0
 
 %post common
-if [ $1 -eq 1 ] ; then 
+if [ $1 -eq 1 ] ; then
   /sbin/chkconfig --add %{name}-arbiter || :
   /sbin/chkconfig --add %{name}-broker || :
   /sbin/chkconfig --add %{name}-poller || :
@@ -161,7 +162,7 @@ fi
 /var/lib/shinken/cli/
 /usr/share/pyshared/shinken
 #%{_usr}/lib/%{name}/plugins
-#%doc etc/packs COPYING THANKS 
+#%doc etc/packs COPYING THANKS
 %config(noreplace) %{_sysconfdir}/default/%{name}
 %config(noreplace) %{_sysconfdir}/logrotate.d/%{name}
 %config(noreplace) %{_sysconfdir}/tmpfiles.d/%{name}.conf
@@ -209,8 +210,8 @@ fi
 %config(noreplace) %{_sysconfdir}/%{name}/daemons/receiverd.ini
 %config(noreplace) %{_sysconfdir}/%{name}/receivers/receiver.cfg
 
-%files doc 
-%docdir %{_localstatedir}/lib/%{name}/doc/build/html 
+%files doc
+%docdir %{_localstatedir}/lib/%{name}/doc/build/html
 
 %changelog
 * Thu Jan 22 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.0.3-3kaji0.2
@@ -240,14 +241,14 @@ fi
 * Sat Dec 15 2012 David Hannequin <david.hannequin@gmail.com> - 1.2.2-1
 - Update from upstream,
 - Delete eue module,
-- Fix web site url, 
+- Fix web site url,
 - Fix Bug 874092 (thanks Sébastien Andreatta).
 
 * Fri Dec 14 2012 David Hannequin <david.hannequin@gmail.com> - 1.0.1-7
-- Fix uninstall receiver.  
+- Fix uninstall receiver.
 
 * Mon Nov 5 2012 David Hannequin <david.hannequin@gmail.com> - 1.0.1-6
-- Fix bug 874089.  
+- Fix bug 874089.
 
 * Sun Sep 16 2012 David Hannequin <david.hannequin@gmail.com> - 1.0.1-5
 - Add support of el6,
@@ -263,7 +264,7 @@ fi
 - Delete require python-sqlite2.
 
 * Sun Jul 22 2012 David Hannequin <david.hannequin@gmail.com> - 1.0.1-2
-- Add build patch. 
+- Add build patch.
 
 * Tue Mar 13 2012 David Hannequin <david.hannequin@gmail.com> - 1.0.1-1
 - Update from upstream,
@@ -271,17 +272,17 @@ fi
 
 * Mon Oct 24 2011 David Hannequin <david.hannequin@gmail.com> - 0.8.1-1
 - Update from upstream,
-- Add manpage, 
-- Add require nagios plugins.  
+- Add manpage,
+- Add require nagios plugins.
 
 * Mon May 30 2011 David Hannequin <david.hannequin@gmail.com> - 0.6.5-1
 - Update from upstream,
-- Add require python-redis, 
+- Add require python-redis,
 - Add require python-memcached.
 
 * Mon May 30 2011 David Hannequin <david.hannequin@gmail.com> - 0.6.4-3
 - Fix path in default shinken file,
-- Fix path in setup.cfg, 
+- Fix path in setup.cfg,
 - Add file FROM_NAGIOS_TO_SHINKEN.
 
 * Sun May 29 2011 David Hannequin <david.hannequin@gmail.com> - 0.6.4-2
@@ -290,7 +291,7 @@ fi
 - Update from upstreamr.
 
 * Fri May 20 2011 David Hannequin <david.hannequin@gmail.com> - 0.6.4-1
-- Update from upstream. 
+- Update from upstream.
 
 * Fri Apr 29 2011 David Hannequin <david.hannequin@gmail.com> - 0.6-1
 - Fisrt release for fedora.
