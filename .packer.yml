@@ -1,6 +1,10 @@
 centos_6:
-  spec: debian/shinken.spec
-  deps_pip:
-    - sphinx
-debian_7:
-  debian: debian
+    spec: debian/shinken.spec
+centos_7:
+    spec: debian/shinken.spec
+debian_8:
+    debian: debian
+ubuntu_14.04:
+    debian: debian
+ubuntu_12.04:
+    debian: debian
