@@ -3,8 +3,8 @@
 
 Summary:        Python Monitoring tool
 Name:           shinken
-Version:        2.0.3
-Release:        3kaji0.2
+Version:        2.2
+Release:        1kaji0.2
 URL:            http://www.%{name}-monitoring.org
 Source0:        http://www.%{name}-monitoring.org/pub/%{name}_%{version}.orig.tar.gz
 License:        AGPLv3+
@@ -214,6 +214,9 @@ fi
 %docdir %{_localstatedir}/lib/%{name}/doc/build/html
 
 %changelog
+* Tue Feb 17 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.2-1kaji0.2
+- Synchronise with debian packages
+
 * Thu Jan 22 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.0.3-3kaji0.2
 - Synchronise with debian packages
 
