@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -44,11 +44,12 @@ from shinken.property import PathProp, IntegerProp
 class Reactionner(Satellite):
     do_checks = False  # I do not do checks
     do_actions = True
+    my_type = 'reactionner'
 
     properties = Satellite.properties.copy()
     properties.update({
         'pidfile':   PathProp(default='reactionnerd.pid'),
-        'port':      IntegerProp(default='7769'),
+        'port':      IntegerProp(default=7769),
         'local_log': PathProp(default='reactionnerd.log'),
     })
 

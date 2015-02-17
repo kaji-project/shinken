@@ -41,3 +41,6 @@ docs/tools/pages/
 
 # debian
 .pc/
+
+# test and coverage
+test/tmp/.cov*

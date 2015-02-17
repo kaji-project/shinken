@@ -5,7 +5,7 @@ Section: net
 Priority: optional
 Vcs-Git: git://anonscm.debian.org/pkg-shinken/shinken.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-shinken/shinken.git;a=summary
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 XS-Python-Version: >= 2.5, << 2.8
 Build-Depends: python, debhelper (>= 9), quilt, python-setuptools, po-debconf, python-sphinx, graphviz
 Homepage: http://www.shinken-monitoring.org
@@ -42,10 +42,16 @@ Description: Flexible monitoring tool - Common files
 Package: shinken-doc
 Section: doc
 Architecture: all
-Depends: ${misc:Depends}, libjs-jquery, libjs-underscore
+Depends: ${misc:Depends}, libjs-jquery, libjs-underscore, libjs-mathjax, fonts-font-awesome, libjs-modernizr
 Description: Flexible monitoring tool - Documentation
  Shinken documentation.
  .
  Shinken is a new, Nagios compatible monitoring tool, written in Python. The
  main goal of Shinken is to allow users to have a fully flexible architecture
  for their monitoring system that can easily scale to large environments.
+
+Package: shinken-core
+Architecture: all
+Depends: ${misc:Depends}
+Description: transitional dummy package to ensure smooth upgrades to wheezy
+ This empty package can be safely removed.

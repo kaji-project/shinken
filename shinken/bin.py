@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -31,10 +31,11 @@ Shinken.
 
 import sys
 
-VERSION = "2.0.3"
+VERSION = "2.2"
 
 
 # Make sure people are using Python 2.6 or higher
+# This is the canonical python version check
 if sys.version_info < (2, 6):
     sys.exit("Shinken requires as a minimum Python 2.6.x, sorry")
 elif sys.version_info >= (3,):

@@ -12,11 +12,9 @@ Subject: Source /lib/lsb/init-functions if available (required)
  bin/init.d/shinken.in          | 4 +++-
  7 files changed, 27 insertions(+), 1 deletion(-)
 
-Index: shinken/bin/init.d/shinken-arbiter
-===================================================================
---- shinken.orig/bin/init.d/shinken-arbiter
-+++ shinken/bin/init.d/shinken-arbiter
-@@ -23,6 +23,10 @@ curdir=$(dirname "$0")
+--- a/bin/init.d/shinken-arbiter
++++ b/bin/init.d/shinken-arbiter
+@@ -29,6 +29,10 @@
  
  export SHINKEN_MODULE_FILE="$NAME"  ## for 'shinken' init script to see that it's called by us
  
@@ -24,14 +22,12 @@ Index: shinken/bin/init.d/shinken-arbiter
 +. /lib/lsb/init-functions
 +fi
 +
- "$curdir/shinken" $@ arbiter
- 
- exit $?
-Index: shinken/bin/init.d/shinken-broker
-===================================================================
---- shinken.orig/bin/init.d/shinken-broker
-+++ shinken/bin/init.d/shinken-broker
-@@ -29,6 +29,10 @@ curdir=$(dirname "$0")
+ case "$1" in
+     start|stop|reload|restart|force-reload|status|check|checkconfig)
+         "$curdir/shinken" $@ "$SHORTNAME"
+--- a/bin/init.d/shinken-poller
++++ b/bin/init.d/shinken-poller
+@@ -30,6 +30,10 @@
  
  export SHINKEN_MODULE_FILE="$NAME"  ## for 'shinken' init script to see that it's called by us
  
@@ -39,14 +35,12 @@ Index: shinken/bin/init.d/shinken-broker
 +. /lib/lsb/init-functions
 +fi
 +
- "$curdir/shinken" $@ broker
- 
- exit $?
-Index: shinken/bin/init.d/shinken-poller
-===================================================================
---- shinken.orig/bin/init.d/shinken-poller
-+++ shinken/bin/init.d/shinken-poller
-@@ -30,6 +30,10 @@ curdir=$(dirname "$0")
+ case "$1" in
+     start|stop|reload|restart|force-reload|status|check|checkconfig)
+         "$curdir/shinken" $@ "$SHORTNAME"
+--- a/bin/init.d/shinken-reactionner
++++ b/bin/init.d/shinken-reactionner
+@@ -29,6 +29,10 @@
  
  export SHINKEN_MODULE_FILE="$NAME"  ## for 'shinken' init script to see that it's called by us
  
@@ -54,14 +48,12 @@ Index: shinken/bin/init.d/shinken-poller
 +. /lib/lsb/init-functions
 +fi
 +
- "$curdir/shinken" $@ poller
- 
- exit $?
-Index: shinken/bin/init.d/shinken-reactionner
-===================================================================
---- shinken.orig/bin/init.d/shinken-reactionner
-+++ shinken/bin/init.d/shinken-reactionner
-@@ -29,6 +29,10 @@ curdir=$(dirname "$0")
+ case "$1" in
+     start|stop|reload|restart|force-reload|status|check|checkconfig)
+         "$curdir/shinken" $@ "$SHORTNAME"
+--- a/bin/init.d/shinken-receiver
++++ b/bin/init.d/shinken-receiver
+@@ -29,6 +29,10 @@
  
  export SHINKEN_MODULE_FILE="$NAME"  ## for 'shinken' init script to see that it's called by us
  
@@ -69,14 +61,12 @@ Index: shinken/bin/init.d/shinken-reactionner
 +. /lib/lsb/init-functions
 +fi
 +
- "$curdir/shinken" $@ reactionner
- 
- exit $?
-Index: shinken/bin/init.d/shinken-receiver
-===================================================================
---- shinken.orig/bin/init.d/shinken-receiver
-+++ shinken/bin/init.d/shinken-receiver
-@@ -29,6 +29,10 @@ curdir=$(dirname "$0")
+ case "$1" in
+     start|stop|reload|restart|force-reload|status|check|checkconfig)
+         "$curdir/shinken" $@ "$SHORTNAME"
+--- a/bin/init.d/shinken-scheduler
++++ b/bin/init.d/shinken-scheduler
+@@ -29,6 +29,10 @@
  
  export SHINKEN_MODULE_FILE="$NAME"  ## for 'shinken' init script to see that it's called by us
  
@@ -84,29 +74,12 @@ Index: shinken/bin/init.d/shinken-receiver
 +. /lib/lsb/init-functions
 +fi
 +
- "$curdir/shinken" $@ receiver
- 
- exit $?
-Index: shinken/bin/init.d/shinken-scheduler
-===================================================================
---- shinken.orig/bin/init.d/shinken-scheduler
-+++ shinken/bin/init.d/shinken-scheduler
-@@ -29,6 +29,10 @@ curdir=$(dirname "$0")
- 
- export SHINKEN_MODULE_FILE="$NAME"  ## for 'shinken' init script to see that it's called by us
- 
-+if [ -f /lib/lsb/init-functions ]; then
-+. /lib/lsb/init-functions
-+fi
-+
- "$curdir/shinken" $@ scheduler
- 
- exit $?
-Index: shinken/bin/init.d/shinken.in
-===================================================================
---- shinken.orig/bin/init.d/shinken.in
-+++ shinken/bin/init.d/shinken.in
-@@ -170,7 +170,9 @@ echo_failure() {
+ case "$1" in
+     start|stop|reload|restart|force-reload|status|check|checkconfig)
+         "$curdir/shinken" $@ "$SHORTNAME"
+--- a/bin/init.d/shinken.in
++++ b/bin/init.d/shinken.in
+@@ -170,7 +170,9 @@
  # Source function library.
  [ -f /etc/rc.d/init.d/functions ] && . /etc/rc.d/init.d/functions
  
@@ -117,3 +90,16 @@ Index: shinken/bin/init.d/shinken.in
  
  
  
+--- a/bin/init.d/shinken-broker
++++ b/bin/init.d/shinken-broker
+@@ -29,6 +29,10 @@
+ 
+ export SHINKEN_MODULE_FILE="$NAME"  ## for 'shinken' init script to see that it's called by us
+ 
++if [ -f /lib/lsb/init-functions ]; then
++. /lib/lsb/init-functions
++fi
++
+ case "$1" in
+     start|stop|reload|restart|force-reload|status|check|checkconfig)
+         "$curdir/shinken" $@ "$SHORTNAME"
