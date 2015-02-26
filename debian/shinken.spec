@@ -22,6 +22,7 @@ Requires:       sudo
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
 BuildRequires:  graphviz
+BuildRequires:  make
 #BuildRequires:  python-sphinx
 Group:          Application/System
 
@@ -68,6 +69,7 @@ done
 
 # clean git files/
 find . -name '.gitignore' -exec rm -f {} \;
+find . -name '.gitempty' -exec rm -f {} \;
 
 
 %build
