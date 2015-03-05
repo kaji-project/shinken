@@ -9,7 +9,7 @@ centos_7:
 debian_8:
     debian: debian
 ubuntu_10.04:
-    debian: debian
+    debian: debian.lucid
 ubuntu_12.04:
     debian: debian
 ubuntu_14.04:

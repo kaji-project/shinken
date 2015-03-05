@@ -1,0 +1,31 @@
+--- a/setup.py
++++ b/setup.py
+@@ -381,7 +381,7 @@
+     for name in ['shinken.cfg']:
+         inname = os.path.join('etc', name)
+         outname = os.path.join('build', name)
+-        print('updating path in %s', outname)
++#        print('updating path in %s', outname)
+         
+         ## but we HAVE to set the shinken_user & shinken_group to thoses requested:
+         update_file_with_string(inname, outname,
+--- a/setuppackage.py
++++ b/setuppackage.py
+@@ -294,7 +294,7 @@
+         for name in resource_cfg_files:
+             inname = os.path.join('etc', name)
+             outname = os.path.join(self.build_dir, name)
+-            log.info('updating path in %s', outname)
++#            log.info('updating path in %s', outname)
+             update_file_with_string(inname, outname,
+                                     ["/var/lib/shinken/libexec"],
+                                     [self.plugins_path])
+@@ -304,7 +304,7 @@
+         for name in main_config_files:
+             inname = os.path.join('etc', name)
+             outname = os.path.join(self.build_dir, name)
+-            log.info('updating path in %s', outname)
++#            log.info('updating path in %s', outname)
+ 
+             ## but we HAVE to set the shinken_user & shinken_group to thoses requested:
+             update_file_with_string(inname, outname,
