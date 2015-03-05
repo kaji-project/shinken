@@ -4,7 +4,7 @@
 Summary:        Python Monitoring tool
 Name:           shinken
 Version:        2.2
-Release:        1kaji0.2
+Release:        1.2kaji0.2
 URL:            http://www.%{name}-monitoring.org
 Source0:        http://www.%{name}-monitoring.org/pub/%{name}_%{version}.orig.tar.gz
 License:        AGPLv3+
