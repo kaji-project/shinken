@@ -22,10 +22,10 @@ case "$1" in
     configure)
         ## Create user and group
         # Note: if the user exists, it's properties won't be changed (gid, home, shell)
-        adduser  --quiet --system --home /var/lib/shinken --no-create-home --group shinken
+        adduser  --quiet --system --home /var/lib/shinken --no-create-home --group shinken || true
 
         ## Create nagios group
-        addgroup --system nagios
+        addgroup --system nagios || true
 
         ## Add shinken to nagios group
         id -Gn shinken |grep -E '(^|[[:blank:]])nagios($|[[:blank:]])' >/dev/null ||
