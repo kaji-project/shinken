@@ -2,6 +2,9 @@ centos_6:
     spec: debian/shinken.spec
     deps_pip:
         - Sphinx==1.2.3
+    deps:
+        - gcc
+        - make
 centos_7:
     spec: debian/shinken.spec
     deps_pip:
