@@ -1,3 +1,9 @@
+shinken (2.2-1.3kaji0.2) unstable; urgency=medium
+
+  * Update patch for arbiter module config parser 
+
+ -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Mon, 09 Mar 2015 14:47:27 -0400
+
 shinken (2.2-1.2kaji0.2) unstable; urgency=medium
 
   * Add patch for arbiter module config parser

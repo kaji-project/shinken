@@ -4,7 +4,7 @@
 Summary:        Python Monitoring tool
 Name:           shinken
 Version:        2.2
-Release:        1.2kaji0.2
+Release:        1.3kaji0.2
 URL:            http://www.%{name}-monitoring.org
 Source0:        http://www.%{name}-monitoring.org/pub/%{name}_%{version}.orig.tar.gz
 License:        AGPLv3+
@@ -216,6 +216,16 @@ fi
 %docdir %{_localstatedir}/lib/%{name}/doc/build/html
 
 %changelog
+* Mon Mar 09 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.2-1.3kaji0.2
+- Update patch for arbiter module config parser
+
+* Thu Mar 05 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.2-1.2kaji0.2
+- Add patch for arbiter module config parser
+
+* Thu Mar 05 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.2-1.1kaji0.2
+- Fix user shinken creation
+- Add patch for arbiter module config parser
+
 * Tue Feb 17 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.2-1kaji0.2
 - Synchronise with debian packages
 
