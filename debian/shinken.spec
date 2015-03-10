@@ -4,7 +4,7 @@
 Summary:        Python Monitoring tool
 Name:           shinken
 Version:        2.2
-Release:        1.3kaji0.2
+Release:        1.4kaji0.2
 URL:            http://www.%{name}-monitoring.org
 Source0:        http://www.%{name}-monitoring.org/pub/%{name}_%{version}.orig.tar.gz
 License:        AGPLv3+
@@ -216,6 +216,9 @@ fi
 %docdir %{_localstatedir}/lib/%{name}/doc/build/html
 
 %changelog
+* Tue Mar 10 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.2-1.4kaji0.2
+- Fix default resource.cfg adding default snmp version
+
 * Mon Mar 09 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.2-1.3kaji0.2
 - Update patch for arbiter module config parser
 
