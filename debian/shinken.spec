@@ -116,6 +116,9 @@ install -d -m0755 %{buildroot}%{_localstatedir}/log/%{name}
 install -d -m0755 %{buildroot}%{_localstatedir}/log/%{name}/archives
 # lib
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/%{name}
+install -d -m0755 %{buildroot}%{_localstatedir}/lib/%{name}/share
+install -d -m0755 %{buildroot}%{_localstatedir}/lib/%{name}/doc
+install -d -m0755 %{buildroot}%{_localstatedir}/lib/%{name}/inventory
 #run
 mkdir -p %{buildroot}%{_localstatedir}/run/
 install -d -m0755 %{buildroot}%{_localstatedir}/run/%{name}
@@ -216,6 +219,9 @@ fi
 %docdir %{_localstatedir}/lib/%{name}/doc/build/html
 
 %changelog
+* Fri Mar 13 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.2-1.5kaji0.2
+- Add creation of missing folders
+
 * Tue Mar 10 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.2-1.4kaji0.2
 - Fix default resource.cfg adding default snmp version
 

@@ -1,3 +1,9 @@
+shinken (2.2-1.5kaji0.2) unstable; urgency=medium
+
+  * Add creation of missing folders
+
+ -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Fri, 13 Mar 2015 16:18:25 -0400
+
 shinken (2.2-1.4kaji0.2) unstable; urgency=medium
 
   * Fix default resource.cfg adding default snmp version
