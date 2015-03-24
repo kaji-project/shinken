@@ -98,7 +98,7 @@ Now that you know what the parent/child relationships look like for hosts that a
   }
   
   
-So basicaly: **in your "child", you declare who is your parent(s)**.
+So basically: **in your "child", you declare who is your parent(s)**.
 
 
 Reachability Logic in Action 
@@ -111,7 +111,7 @@ Now that you're configured Shinken with the proper parent/child relationships fo
    :scale: 90 %
 
 
-When hosts change state (i.e. from UP to DOWN), the host reachability logic in Shinken kicks in. The reachability logic will initiate parallel checks of the parents and children of whatever hosts change state. This allows Shinken to quickly determine the current status of your network infrastructure when changes occur. During this additonal check time, the notification for the web and router1 hosts are blocked because we don't know yet **WHO** is the root problem.
+When hosts change state (i.e. from UP to DOWN), the host reachability logic in Shinken kicks in. The reachability logic will initiate parallel checks of the parents and children of whatever hosts change state. This allows Shinken to quickly determine the current status of your network infrastructure when changes occur. During this additional check time, the notification for the web and router1 hosts are blocked because we don't know yet **WHO** is the root problem.
 
 
 .. image:: /_static/images///official/images/reachability4.png
@@ -123,10 +123,10 @@ In this example, Shinken will determine that Web and Router1 are both in DOWN st
 Shinken will determine that all the hosts "beneath" Router1 are all in an UNREACHABLE state because Shinken can't reach them. Router1 is DOWN and is blocking the path to those other hosts. Those hosts might be running fine, or they might be offline - Shinken doesn't know because it can't reach them. Hence Shinken considers them to be UNREACHABLE instead of DOWN, and won't send notifications about them. Such hosts and services beneath router1 are the **impacts** of the **root problem** "router1"
 
 
-What about more than one parent for an host? 
+What about more than one parent for a host? 
 ---------------------------------------------
 
-You see that there is a 's' in parents. Because you can define as many parent as you want for an host (like if you got an active/passive switch setup). **The host will be UNREACHABLE only, and only if all it's parents are down or unreachable**. If one is still alive, it will be down. See this as a big *OR* rule.
+You see that there is a 's' in parents. Because you can define as many parent as you want for a host (like if you got an active/passive switch setup). **The host will be UNREACHABLE only, and only if all it's parents are down or unreachable**. If one is still alive, it will be down. See this as a big *OR* rule.
 
 
 UNREACHABLE States and Notifications 
@@ -193,7 +193,7 @@ By default, service dependencies are inherited. Let take an example where the my
 ::
 
   define service{
-    host_name              srv-bd
+    host_name              srv-db
     service_description    mysql
     service_dependencies   srv-file,nfs,srv-dns,dns
   }
@@ -205,7 +205,7 @@ If Shinken find a problem on Http, it will raise a check on mysql. If this one g
 And with the host down/unreachable logic? 
 ------------------------------------------
 
-The dependency logic is done in parallel to the network one. If one logic say it's an impact, then it will tag the problem state as an impact. For example, if the srv-db is down a warning/critical alert on the Http service will be set as an **impact**, like the mysql one, and the root problem will be the srv-bd host that will raise only one notification, a host problem.
+The dependency logic is done in parallel to the network one. If one logic say it's an impact, then it will tag the problem state as an impact. For example, if the srv-db is down a warning/critical alert on the Http service will be set as an **impact**, like the mysql one, and the root problem will be the srv-db host that will raise only one notification, a host problem.
 
 
 Advanced dependencies 

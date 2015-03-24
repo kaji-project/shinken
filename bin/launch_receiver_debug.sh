@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -23,9 +23,9 @@
 
 
 DIR="$(cd $(dirname "$0"); pwd)"
-BIN="$DIR"/../bin
+BIN="$DIR"/../shinken/bin
 ETC="$DIR"/../etc
 DEBUG_PATH="/tmp/receiver.debug"
 
 echo "Launching receiver (which manages passive data) in debug mode to the file $DEBUG_PATH"
-"$BIN"/shinken-receiver -d -c "$ETC"/daemons/receiverd.ini --debug "$DEBUG_PATH"
+"$BIN"/shinken_receiver.py -d -c "$ETC"/daemons/receiverd.ini --debug "$DEBUG_PATH"

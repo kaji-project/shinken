@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -51,13 +51,13 @@ class Command(Item):
         'poller_tag':   StringProp(default='None'),
         'reactionner_tag':   StringProp(default='None'),
         'module_type':  StringProp(default=None),
-        'timeout':      IntegerProp(default='-1'),
-        'enable_environment_macros': BoolProp(default=0),
+        'timeout':      IntegerProp(default=-1),
+        'enable_environment_macros': BoolProp(default=False),
     })
 
     def __init__(self, params={}):
         setattr(self, 'id', self.__class__.id)
-        #self.id = self.__class__.id
+        # self.id = self.__class__.id
         self.__class__.id += 1
 
         self.init_running_properties()
@@ -96,35 +96,20 @@ class Command(Item):
     def get_name(self):
         return self.command_name
 
-    def pythonize(self):
-        self.command_name = self.command_name.strip()
-        self.timeout = int(self.timeout)
-
     def __str__(self):
         return str(self.__dict__)
-
-    # Get a brok with initial status
-    def get_initial_status_brok(self):
-        cls = self.__class__
-        my_type = cls.my_type
-        data = {'id': self.id}
-
-        self.fill_data_brok_from(data, 'full_status')
-        b = Brok('initial_' + my_type + '_status', data)
-        return b
 
     def fill_data_brok_from(self, data, brok_type):
         cls = self.__class__
         # Now config properties
         for prop, entry in cls.properties.items():
             # Is this property intended for broking?
-            #if 'fill_brok' in entry[prop]:
+            # if 'fill_brok' in entry[prop]:
             if brok_type in entry.fill_brok:
                 if hasattr(self, prop):
                     data[prop] = getattr(self, prop)
-                #elif 'default' in entry[prop]:
+                # elif 'default' in entry[prop]:
                 #    data[prop] = entry.default
-
 
 
     # Call by pickle to dataify the comment

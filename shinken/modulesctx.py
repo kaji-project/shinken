@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #     Gabes Jean, naparuba@gmail.com
 #     Gerhard Lausser, Gerhard.Lausser@consol.de
 #     Gregory Starck, g.starck@gmail.com
@@ -24,15 +24,16 @@
 # along with Shinken.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import imp
 import os
 import sys
 
-from shinken.log import logger
+
+from shinken.modulesmanager import ModulesManager
+
 
 class ModulesContext(object):
     def __init__(self):
-        pass
+        self.modules_dir = None
 
     def set_modulesdir(self, modulesdir):
         self.modules_dir = modulesdir
@@ -40,25 +41,22 @@ class ModulesContext(object):
     def get_modulesdir(self):
         return self.modules_dir
 
-
     # Useful for a module to load another one, and get a handler to it
-    def get_module(self, name):
-        mod_dir  = os.path.abspath(os.path.join(self.modules_dir, name))
-        if not mod_dir in sys.path:
-            sys.path.append(mod_dir)
-        mod_path = os.path.join(self.modules_dir, name, 'module.py')
-        if not os.path.exists(mod_path):
-            mod_path = os.path.join(self.modules_dir, name, 'module.pyc')
-        try:
-            if mod_path.endswith('.py'):
-                r = imp.load_source(name, mod_path)
-            else:
-                r = imp.load_compiled(name, mod_path)
-        except:
-            logger.warning('The module %s cannot be founded or load' % mod_path)
-            raise
-        return r
+    def get_module(self, mod_name):
+        if self.modules_dir and self.modules_dir not in sys.path:
+            sys.path.append(self.modules_dir)
+        if self.modules_dir:
+            mod_dir = os.path.join(self.modules_dir, mod_name)
+        else:
+            mod_dir = None
+        # to keep it back-compatible with previous Shinken module way,
+        # we first try with "import `mod_name`.module" and if we succeed
+        # then that's the one to actually use:
+        mod = ModulesManager.try_best_load('.module', mod_name)
+        if mod:
+            return mod
+        # otherwise simply try new and old style:
+        return ModulesManager.try_load(mod_name, mod_dir)
 
 
 modulesctx = ModulesContext()
-

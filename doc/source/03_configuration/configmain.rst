@@ -192,7 +192,7 @@ Default:
 
   enable_problem_impacts_states_change=0
 
-This option is used to know if we apply or not the state change when an host or service is impacted by a root problem (like the service's host going down or a host's parent being down too). The state will be changed by UNKNONW for a service and UNREACHABLE for an host until their next schedule check. This state change do not count as a attempt, it's just for console so the users know that theses objects got problems and the previous states are not sure.
+This option is used to know if we apply or not the state change when a host or service is impacted by a root problem (like the service's host going down or a host's parent being down too). The state will be changed by UNKNONW for a service and UNREACHABLE for a host until their next schedule check. This state change do not count as a attempt, it's just for console so the users know that theses objects got problems and the previous states are not sure.
 
 
 .. _configuration/configmain#disable_old_nagios_parameters_whining:
@@ -308,26 +308,6 @@ References:
 
   * http://www.mail-archive.com/shinken-devel@lists.sourceforge.net/msg01394.html
   * https://github.com/naparuba/shinken/commit/9ce28d80857c137e5b915b39bbb8c1baecc821f9
-
-
-.. _configuration/configmain#pack_distribution_file:
-
-Pack Distribution File
------------------------
-
-Format:
-
-::
-
-  pack_distribution_file=<filename>
-
-Default:
-
-::
-
-  pack_distribution_file=pack_distribution.dat
-
-A pack distribution file is a local file near the arbiter that will keep host pack id association, and so push same host on the same scheduler if possible between restarts.
 
 
 

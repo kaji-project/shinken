@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #     Gabes Jean, naparuba@gmail.com
 #     Gerhard Lausser, Gerhard.Lausser@consol.de
 #     Gregory Starck, g.starck@gmail.com
@@ -131,7 +130,7 @@ class DB(object):
     def fetchone(self):
         """Just get an entry"""
         return self.db_cursor.fetchone()
-        
+
     def fetchall(self):
         """Get all entry"""
         return self.db_cursor.fetchall()

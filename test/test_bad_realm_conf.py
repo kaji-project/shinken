@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2009-2010:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #
@@ -31,7 +31,9 @@ class TestBadRealmConf(ShinkenTest):
         self.setup_with_file('etc/shinken_bad_realm_conf.cfg')
 
     def test_bad_conf(self):
-        self.assert_(not self.conf.conf_is_correct)
+        self.assertFalse(self.conf.conf_is_correct)
+        self.assert_any_log_match(" Error : More than one realm are set to the default realm")
+        self.assert_any_log_match("\[host::.*\] the host .* got an invalid realm")
 
 
 if __name__ == '__main__':

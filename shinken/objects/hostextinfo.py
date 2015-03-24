@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -28,16 +28,12 @@ about the configuration part. Parameters are merged in Hosts so it's
 no use in running part
 """
 
-import time
 
 from item import Item, Items
 
 from shinken.autoslots import AutoSlots
-from shinken.util import format_t_into_dhms_format, to_hostnames_list, get_obj_name, to_svc_hst_distinct_lists, to_list_string_of_names
-from shinken.property import BoolProp, IntegerProp, FloatProp, CharProp, StringProp, ListProp
-from shinken.macroresolver import MacroResolver
-from shinken.eventhandler import EventHandler
-from shinken.log import logger
+from shinken.util import to_hostnames_list
+from shinken.property import StringProp, ListProp
 
 
 class HostExtInfo(Item):
@@ -52,7 +48,9 @@ class HostExtInfo(Item):
     # *required: is required in conf
     # *default: default value if no set in conf
     # *pythonize: function to call when transforming string to python object
-    # *fill_brok: if set, send to broker. there are two categories: full_status for initial and update status, check_result for check results
+    # *fill_brok: if set, send to broker.
+    #             there are two categories:
+    #                   full_status for initial and update status, check_result for check results
     # *no_slots: do not take this property for __slots__
     #  Only for the initial call
     # conf_send_preparation: if set, will pass the property to this function. It's used to "flatten"
@@ -61,7 +59,7 @@ class HostExtInfo(Item):
     #  the major times it will be to flatten the data (like realm_name instead of the realm object).
     properties = Item.properties.copy()
     properties.update({
-        'host_name':            ListProp(brok_transformation=to_hostnames_list),
+        'host_name':            StringProp(),
         'notes':                StringProp(default=''),
         'notes_url':            StringProp(default=''),
         'icon_image':           StringProp(default=''),
@@ -134,15 +132,19 @@ class HostsExtInfo(Items):
     # Merge extended host information into host
     def merge(self, hosts):
         for ei in self:
-            hosts_names = ei.get_name().split(",")
-            for host_name in hosts_names:
-                h = hosts.find_by_name(host_name)
-                if h is not None:
-                    # FUUUUUUUUUUsion
-                    self.merge_extinfo(h, ei)
+            host_name = ei.get_name()
+            h = hosts.find_by_name(host_name)
+            if h is not None:
+                # FUUUUUUUUUUsion
+                self.merge_extinfo(h, ei)
 
     def merge_extinfo(self, host, extinfo):
-        properties = ['notes', 'notes_url', 'icon_image', 'icon_image_alt', 'vrml_image', 'statusmap_image']
+        properties = ['notes',
+                      'notes_url',
+                      'icon_image',
+                      'icon_image_alt',
+                      'vrml_image',
+                      'statusmap_image']
         # host properties have precedence over hostextinfo properties
         for p in properties:
             if getattr(host, p) == '' and getattr(extinfo, p) != '':

@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #     Gabes Jean, naparuba@gmail.com
 #     Gerhard Lausser, Gerhard.Lausser@consol.de
 #     Gregory Starck, g.starck@gmail.com
@@ -51,4 +50,5 @@ class Message:
         return self._from
 
     def str(self):
-        return "Message from %d (%s), Type: %s Data: %s" % (self._from, self.source, self._type, self._data)
+        return "Message from %d (%s), Type: %s Data: %s" % (
+            self._from, self.source, self._type, self._data)

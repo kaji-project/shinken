@@ -16,7 +16,7 @@ Check_MK Multisite
 * Screenshots: http://mathias-kettner.de/check_mk_multisite_screenshots.html
 * Description: "A new general purpose Nagios-plugin for retrieving data."
 * License: GPL v2
-* Shinken dedicated forum: http://www.shinken-monitoring.org/forum/index.php/board,10.0.html
+* Shinken dedicated forum: http://forum.shinken-monitoring.org/forums/17-Use-with-Multisite
 
 
 Using Shinken with Multisite 
@@ -49,7 +49,7 @@ Check_MK install quick guide
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-  - Install check_mk: Detailed `instructions`_ there. Shell driven install with a lot of questions related with Check_mk install paths and integration with Apache and existing "Nagios". For Shinken some default answers must be changed to accomodate Shinken install.
+  - Install check_mk: Detailed `instructions`_ there. Shell driven install with a lot of questions related with Check_mk install paths and integration with Apache and existing "Nagios". For Shinken some default answers must be changed to accommodate Shinken install.
   - Edit config file ''multisite.mk'', usually in ''/etc/check_mk'', to insert a new site pointing to Shinken and write Livestatus socket address as declared at :ref:`Shinken's Livestatus module <enable_livestatus_module>`. Socket may also be an unix socket ("unix:/some/other/path").
   - Restart Apache.
 

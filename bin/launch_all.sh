@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -24,10 +24,6 @@
 
 DIR="$(cd $(dirname "$0"); pwd)"
 echo "Going to dir $DIR"
-
-# Prepare the launch by cleaning var/log directories
-. $DIR/preparedev
-
 
 cd "$DIR"/..
 

@@ -6,7 +6,7 @@
 
 
 Summary 
-========
+=======
 
 By following this tutorial, in 10 minutes you will have the core monitoring system for your network.
 
@@ -23,13 +23,13 @@ Ready? Let's go!
 .. _gettingstarted/installations/shinken-installation#requirements:
 
 Requirements
-=============
+============
 
 Mandatory Requirements
 ----------------------
 
-* `Python`_ 2.6 or higher (2.7 will get higher performances)
-* `python-pycurl`_ Python package for Shinken daemon communications
+* `Python`_ 2.6 or higher (2.7 will get higher performance)
+* `python-pycurl`_ Python package for Shinken daemon communication
 * `setuptools`_ or `distribute` Python package for installation
 
 
@@ -37,9 +37,9 @@ Conditional Requirements
 ------------------------
 
 * `Python`_ 2.7 is required for developers to run the test suite, shinken/test/
-* `python-cherrypy3`_ (recommanded) enhanceddaemons communications, especially in HTTPS mode
-* `Monitoring Plugins`_ (recommended) provides a set of plugins to monitor host (Shinken use check_icmp on default install).
-  Monitoring plugins are available on most linux distribution (nagios-plugins package)
+* `python-cherrypy3`_ (recommended) enhanceddaemons communications, especially in HTTPS mode
+* `Monitoring Plugins`_ (recommended) provides a set of plugins to monitor host (Shinken uses check_icmp by default install).
+  Monitoring plugins are available on most linux distributions (nagios-plugins package)
 
 
 .. _gettingstarted/installations/shinken-installation#gnu_linux_unix:
@@ -48,13 +48,13 @@ Conditional Requirements
 
 
 GNU/Linux & Unix Installation 
-==============================
+=============================
 
 Method 1: Pip
---------------
+-------------
 
-Shinken 2.0 is available on Pypi : https://pypi.python.org/pypi/Shinken/2.0
-You can donwload the tarball and execute the setup.py or just use the pip command to install it automatically.
+Shinken 2.2 is available on Pypi : https://pypi.python.org/pypi/Shinken/2.2
+You can download the tarball and execute the setup.py or just use the pip command to install it automatically.
 
 
 ::
@@ -67,8 +67,8 @@ You can donwload the tarball and execute the setup.py or just use the pip comman
 Method 2: Packages 
 -------------------
 
-For now the 2.0 packages are not available, but the community is working hard for it! Packages are simple, easy to update and clean.
-Packages should be available on Debian/Ubuntu and Fedora/RH/CentOS soon (basically  *.deb* and  *.rpm*)
+For now the 2.2 packages are not available, but the community is working hard for it! Packages are simple, easy to update and clean.
+Packages should be available on Debian/Ubuntu and Fedora/RH/CentOS soon (basically  *.deb* and  *.rpm*).
 
 
 Method 3: Installation from sources 
@@ -79,14 +79,14 @@ Download last stable `Shinken tarball`_ archive (or get the latest `git snapshot
 ::
 
   adduser shinken
-  wget http://www.shinken-monitoring.org/pub/shinken-2.0.tar.gz
-  tar -xvzf shinken-2.0.tar.gz
-  cd shinken-2.0
+  wget http://www.shinken-monitoring.org/pub/shinken-2.2.tar.gz
+  tar -xvzf shinken-2.2.tar.gz
+  cd shinken-2.2
   python setup.py install
 
 
-Shinken 2.0 introduces LSB path. If you want to stick to one directory installation you can of course. 
-Default paths are the following :
+Shinken 2.X uses LSB path. If you want to stick to one directory installation you can of course.
+Default paths are the following:
 
  * **/etc/shinken** for configuration files
  * **/var/lib/shinken** for shinken modules, retention files...
@@ -98,13 +98,10 @@ Default paths are the following :
 
 
 Windows Installation 
-=====================
+====================
 
-For 2.0 the executable installer may not be provided. Consequently, installing Shinken on a Windows may be manual with setup.py
-Step are basically the same as the linux one (Python install etc) but in windows environment it's always a bit tricky.
-
-
-
+For 2.X+ the executable installer may not be provided. Consequently, installing Shinken on a Windows may be manual with setup.py.
+Steps are basically the same as on Linux (Python install etc.) but in windows environment it's always a bit tricky.
 
 
 .. _Python: http://www.python.org/download/
@@ -113,6 +110,6 @@ Step are basically the same as the linux one (Python install etc) but in windows
 .. _python-pycurl: http://pycurl.sourceforge.net/
 .. _setuptools: http://pypi.python.org/pypi/setuptools/
 .. _git snapshot: https://github.com/naparuba/shinken/tarball/master
-.. _Shinken tarball: http://www.shinken-monitoring.org/pub/shinken-2.0.tar.gz
+.. _Shinken tarball: http://www.shinken-monitoring.org/pub/shinken-2.2.tar.gz
 .. _install.d/README: https://github.com/naparuba/shinken/blob/master/install.d/README
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -23,8 +23,8 @@
 
 
 DIR="$(cd $(dirname "$0"); pwd)"
-BIN="$DIR"/../bin
+BIN="$DIR"/../shinken/bin
 ETC="$DIR"/../etc
 
 echo "Launching Broker (which exports all data)"
-"$BIN"/shinken-broker -d -c "$ETC"/daemons/brokerd.ini
+"$BIN"/shinken_broker.py -d -c "$ETC"/daemons/brokerd.ini

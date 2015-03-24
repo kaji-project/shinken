@@ -1,9 +1,8 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #     Gabes Jean, naparuba@gmail.com
 #     Gerhard Lausser, Gerhard.Lausser@consol.de
 #     Gregory Starck, g.starck@gmail.com
@@ -34,20 +33,20 @@ class ContactDowntime:
     # Just to list the properties we will send as pickle
     # so to others daemons, so all but NOT REF
     properties = {
-        #'activate_me':  None,
-        #'entry_time':   None,
-        #'fixed':        None,
+        # 'activate_me':  None,
+        # 'entry_time':   None,
+        # 'fixed':        None,
         'start_time':   None,
-        #'duration':     None,
-        #'trigger_id':   None,
+        # 'duration':     None,
+        # 'trigger_id':   None,
         'end_time':     None,
-        #'real_end_time': None,
+        # 'real_end_time': None,
         'author':       None,
         'comment':      None,
         'is_in_effect': None,
-        #'has_been_triggered': None,
+        # 'has_been_triggered': None,
         'can_be_deleted': None,
-        }
+    }
 
     # Schedule a contact downtime. It's far more easy than a host/service
     # one because we got a beginning, and an end. That's all for running.
@@ -62,7 +61,7 @@ class ContactDowntime:
         self.comment = comment
         self.is_in_effect = False
         self.can_be_deleted = False
-        #self.add_automatic_comment()
+        # self.add_automatic_comment()
 
 
     # Check if we came into the activation of this downtime
@@ -70,7 +69,7 @@ class ContactDowntime:
         now = time.time()
         was_is_in_effect = self.is_in_effect
         self.is_in_effect = (self.start_time <= now <= self.end_time)
-        logger.info("CHECK ACTIVATION:%s" % (self.is_in_effect))
+        logger.info("CHECK ACTIVATION:%s", self.is_in_effect)
 
         # Raise a log entry when we get in the downtime
         if not was_is_in_effect and self.is_in_effect:
@@ -102,7 +101,7 @@ class ContactDowntime:
     # Call by pickle to dataify the comment
     # because we DO NOT WANT REF in this pickleisation!
     def __getstate__(self):
-        #print "Asking a getstate for a downtime on", self.ref.get_dbg_name()
+        # print "Asking a getstate for a downtime on", self.ref.get_dbg_name()
         cls = self.__class__
         # id is not in *_properties
         res = [self.id]

@@ -2,7 +2,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -31,5 +31,5 @@ class Borg(object):
     __shared_state = {}
 
     def __init__(self):
-        #print "Init Borg", self.__dict__, self.__class__.__shared_state
+        # print "Init Borg", self.__dict__, self.__class__.__shared_state
         self.__dict__ = self.__class__.__shared_state

@@ -42,7 +42,7 @@ Example Definition:
       address            node1.mydomain
       port               7772
       spare              0
-      ealm              All
+      realm              All
       ## Optional
       manage_arbiters     1   
       manage_sub_realms   1
@@ -50,7 +50,7 @@ Example Definition:
       data_timeout        120 ; Data send timeout
       max_check_attempts  3   ; If ping fails N or more, then the node is dead
       check_interval      60  ; Ping node every minutes  	       manage_sub_realms  1
-      modules             Livestatus,Simple-log,WebUI
+      modules             livestatus,simple-log,webui
   }
 
   
@@ -61,7 +61,7 @@ broker_name
   This variable is used to identify the *short name* of the broker which the data is associated with.
 
 address
-  This directive is used to define the adress from where the main arbier can reach this broker. This can be a DNS name or a IP adress.
+  This directive is used to define the address from where the main arbier can reach this broker. This can be a DNS name or a IP address.
 
 port
   This directive is used to define the TCP port used bu the daemon. The default value is *7772*.

@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -28,6 +28,7 @@
 """
 import time
 import cPickle  # for hashing compute
+import itertools
 
 # Try to import md5 function
 try:
@@ -37,27 +38,27 @@ except ImportError:
 
 from copy import copy
 
-from shinken.graph import Graph
 from shinken.commandcall import CommandCall
-from shinken.property import StringProp, ListProp, BoolProp, IntegerProp
+from shinken.property import (StringProp, ListProp, BoolProp,
+                              IntegerProp, ToGuessProp, PythonizeError)
 from shinken.brok import Brok
-from shinken.util import strip_and_uniq
+from shinken.util import strip_and_uniq, is_complex_expr
 from shinken.acknowledge import Acknowledge
 from shinken.comment import Comment
-from shinken.complexexpression import ComplexExpressionFactory
 from shinken.log import logger
-
+from shinken.complexexpression import ComplexExpressionFactory
+from shinken.graph import Graph
 
 
 class Item(object):
 
     properties = {
         'imported_from':            StringProp(default='unknown'),
-        'use':                      ListProp(default=''),
+        'use':                      ListProp(default=None, split_on_coma=True),
         'name':                     StringProp(default=''),
-        'definition_order':         IntegerProp(default='100'),
+        'definition_order':         IntegerProp(default=100),
         # TODO: find why we can't uncomment this line below.
-        #'register':                 BoolProp(default='1'),
+        'register':                 BoolProp(default=True),
     }
 
     running_properties = {
@@ -85,30 +86,72 @@ class Item(object):
         self.plus = {}  # for value with a +
 
         self.init_running_properties()
-
         # [0] = +  -> new key-plus
         # [0] = _  -> new custom entry in UPPER case
         for key in params:
-            # delistify attributes if there is only one value
-            params[key] = self.compact_unique_attr_value(params[key])
+            # We want to create instance of object with the good type.
+            # Here we've just parsed config files so everything is a list.
+            # We use the pythonize method to get the good type.
+            try:
+                if key in self.properties:
+                    val = self.properties[key].pythonize(params[key])
+                elif key in self.running_properties:
+                    warning = "using a the running property %s in a config file" % key
+                    self.configuration_warnings.append(warning)
+                    val = self.running_properties[key].pythonize(params[key])
+                elif hasattr(self, 'old_properties') and key in self.old_properties:
+                    val = self.properties[self.old_properties[key]].pythonize(params[key])
+                elif key.startswith('_'):  # custom macro, not need to detect something here
+                    _t = params[key]
+                    # If it's a string, directly use this
+                    if isinstance(_t, basestring):
+                        val = _t
+                    # aa list for a custom macro is not managed (conceptually invalid)
+                    # so take the first defined
+                    elif isinstance(_t, list) and len(_t) > 0:
+                        val = _t[0]
+                    # not a list of void? just put void string so
+                    else:
+                        val = ''
+                else:
+                    warning = "Guessing the property %s type because it is not in %s object properties" % \
+                              (key, cls.__name__)
+                    self.configuration_warnings.append(warning)
+                    val = ToGuessProp.pythonize(params[key])
+            except PythonizeError as expt:
+                err = "Error while pythonizing parameter '%s': %s" % (key, expt)
+                self.configuration_errors.append(err)
+                continue
+
             # checks for attribute value special syntax (+ or _)
-            if not isinstance(params[key], list) and \
-               len(params[key]) >= 1 and params[key][0] == '+':
+            # we can have '+param' or ['+template1' , 'template2']
+            if isinstance(val, str) and len(val) >= 1 and val[0] == '+':
+                err = "A + value for a single string is not handled"
+                self.configuration_errors.append(err)
+                continue
+
+            if (isinstance(val, list) and
+                    len(val) >= 1 and
+                    isinstance(val[0], unicode) and
+                    len(val[0]) >= 1 and
+                    val[0][0] == '+'):
                 # Special case: a _MACRO can be a plus. so add to plus
                 # but upper the key for the macro name
+                val[0] = val[0][1:]
                 if key[0] == "_":
-                    self.plus[key.upper()] = params[key][1:]  # we remove the +
+
+                    self.plus[key.upper()] = val  # we remove the +
                 else:
-                    self.plus[key] = params[key][1:]  # we remove the +
+                    self.plus[key] = val   # we remove the +
             elif key[0] == "_":
-                if isinstance(params[key], list):
+                if isinstance(val, list):
                     err = "no support for _ syntax in multiple valued attributes"
                     self.configuration_errors.append(err)
                     continue
                 custom_name = key.upper()
-                self.customs[custom_name] = params[key]
+                self.customs[custom_name] = val
             else:
-                setattr(self, key, params[key])
+                setattr(self, key, val)
 
 
     # When values to set on attributes are unique (single element list),
@@ -146,6 +189,11 @@ class Item(object):
                 setattr(i, prop, val)
         # Also copy the customs tab
         i.customs = copy(self.customs)
+        # And tags/templates
+        if hasattr(self, "tags"):
+            i.tags = copy(self.tags)
+        if hasattr(self, "templates"):
+            i.templates = copy(self.templates)
         return i
 
     def clean(self):
@@ -162,10 +210,7 @@ Like temporary attributes such as "imported_from", etc.. """
 
     def is_tpl(self):
         """ Return if the elements is a template """
-        try:
-            return self.register == '0'
-        except Exception, exp:
-            return False
+        return not getattr(self, "register", True)
 
     # If a prop is absent and is not required, put the default value
     def fill_default(self):
@@ -201,23 +246,6 @@ Like temporary attributes such as "imported_from", etc.. """
     # Make this method a classmethod
     load_global_conf = classmethod(load_global_conf)
 
-    # Use to make python properties
-    def pythonize(self):
-        cls = self.__class__
-        for prop, tab in cls.properties.items():
-            try:
-                new_val = tab.pythonize(getattr(self, prop))
-                setattr(self, prop, new_val)
-            except AttributeError, exp:
-                #print exp
-                pass  # Will be catch at the is_correct moment
-            except KeyError, exp:
-                #print "Missing prop value", exp
-                err = "the property '%s' of '%s' do not have value" % (prop, self.get_name())
-                self.configuration_errors.append(err)
-            except ValueError, exp:
-                err = "incorrect type for property '%s' of '%s'" % (prop, self.get_name())
-                self.configuration_errors.append(err)
 
     # Compute a hash of this element values. Should be launched
     # When we got all our values, but not linked with other objects
@@ -234,60 +262,61 @@ Like temporary attributes such as "imported_from", etc.. """
         self.id = i
 
     def get_templates(self):
-        if hasattr(self, 'use') and self.use != '':
-            if isinstance(self.use, list):
-                return self.use
-            else:
-                return self.use.split(',')
+        use = getattr(self, 'use', '')
+        if isinstance(use, list):
+            return [n.strip() for n in use if n.strip()]
         else:
-            return []
+            return [n.strip() for n in use.split(',') if n.strip()]
 
 
     # We fillfull properties with template ones if need
-    def get_property_by_inheritance(self, items, prop):
+    def get_property_by_inheritance(self, prop):
+        if prop == 'register':
+            return None  # We do not inherit from register
 
         # If I have the prop, I take mine but I check if I must
         # add a plus property
         if hasattr(self, prop):
             value = getattr(self, prop)
-            # Maybe this value is 'null'. If so, we should NOT inherit
-            # and just delete this entry, and hope of course.
-            # Keep "null" values, because in "inheritance chaining" they must
-            # be passed from one level to the next.
-            #if value == 'null':
-            #    delattr(self, prop)
-            #    return None
             # Manage the additive inheritance for the property,
             # if property is in plus, add or replace it
             # Template should keep the '+' at the beginning of the chain
             if self.has_plus(prop):
-                value = self.get_plus_and_delete(prop) + ',' + value
+                value.insert(0, self.get_plus_and_delete(prop))
                 if self.is_tpl():
-                    value = '+' + value
+                    value = list(value)
+                    value.insert(0, '+')
             return value
         # Ok, I do not have prop, Maybe my templates do?
         # Same story for plus
+        # We reverse list, so that when looking for properties by inheritance,
+        # the least defined template wins (if property is set).
         for i in self.templates:
-            value = i.get_property_by_inheritance(items, prop)
+            value = i.get_property_by_inheritance(prop)
 
-            if value is not None:
+            if value is not None and value != []:
                 # If our template give us a '+' value, we should continue to loop
                 still_loop = False
-                if not isinstance(value, list) and value.startswith('+'):
+                if isinstance(value, list) and value[0] == '+':
                     # Templates should keep their + inherited from their parents
                     if not self.is_tpl():
+                        value = list(value)
                         value = value[1:]
                     still_loop = True
 
                 # Maybe in the previous loop, we set a value, use it too
                 if hasattr(self, prop):
                     # If the current value is strong, it will simplify the problem
-                    if not isinstance(value, list) and value.startswith('+'):
+                    if not isinstance(value, list) and value[0] == '+':
                         # In this case we can remove the + from our current
                         # tpl because our value will be final
-                        value = ','.join([getattr(self, prop), value[1:]])
-                    else: # If not, se should keep the + sign of need
-                        value = ','.join([getattr(self, prop), value])
+                        new_val = list(getattr(self, prop))
+                        new_val.extend(value[1:])
+                        value = new_val
+                    else:  # If not, se should keep the + sign of need
+                        new_val = list(getattr(self, prop))
+                        new_val.extend(value)
+                        value = new_val
 
 
                 # Ok, we can set it
@@ -298,10 +327,12 @@ Like temporary attributes such as "imported_from", etc.. """
                 if not still_loop:
                     # And set my own value in the end if need
                     if self.has_plus(prop):
-                        value = ','.join([getattr(self, prop), self.get_plus_and_delete(prop)])
+                        value = list(value)
+                        value = list(getattr(self, prop))
+                        value.extend(self.get_plus_and_delete(prop))
                         # Template should keep their '+'
-                        if self.is_tpl() and not value.startswith('+'):
-                            value = '+' + value
+                        if self.is_tpl() and not value[0] == '+':
+                            value.insert(0, '+')
                         setattr(self, prop, value)
                     return value
 
@@ -314,14 +345,16 @@ Like temporary attributes such as "imported_from", etc.. """
         # add the already set self.prop value
         if self.has_plus(prop):
             if template_with_only_plus:
-                value = ','.join([getattr(self, prop), self.get_plus_and_delete(prop)])
+                value = list(getattr(self, prop))
+                value.extend(self.get_plus_and_delete(prop))
             else:
                 value = self.get_plus_and_delete(prop)
             # Template should keep their '+' chain
             # We must say it's a '+' value, so our son will now that it must
             # still loop
-            if self.is_tpl() and not value.startswith('+'):
-                value = '+' + value
+            if self.is_tpl() and value != [] and not value[0] == '+':
+                value.insert(0, '+')
+
             setattr(self, prop, value)
             return value
 
@@ -331,9 +364,11 @@ Like temporary attributes such as "imported_from", etc.. """
 
 
     # We fillfull properties with template ones if need
-    def get_customs_properties_by_inheritance(self, items):
+    def get_customs_properties_by_inheritance(self):
+        # We reverse list, so that when looking for properties by inheritance,
+        # the least defined template wins (if property is set).
         for i in self.templates:
-            tpl_cv = i.get_customs_properties_by_inheritance(items)
+            tpl_cv = i.get_customs_properties_by_inheritance()
             if tpl_cv is not {}:
                 for prop in tpl_cv:
                     if prop not in self.customs:
@@ -341,12 +376,13 @@ Like temporary attributes such as "imported_from", etc.. """
                     else:
                         value = self.customs[prop]
                     if self.has_plus(prop):
-                        value = self.get_plus_and_delete(prop) + ',' + value
+                        value.insert(0, self.get_plus_and_delete(prop))
+                        # value = self.get_plus_and_delete(prop) + ',' + value
                     self.customs[prop] = value
         for prop in self.customs:
             value = self.customs[prop]
             if self.has_plus(prop):
-                value = self.get_plus_and_delete(prop) + ',' + value
+                value.insert(0, self.get_plus_and_delete(prop))
                 self.customs[prop] = value
         # We can get custom properties in plus, we need to get all
         # entires and put
@@ -360,7 +396,7 @@ Like temporary attributes such as "imported_from", etc.. """
     def has_plus(self, prop):
         try:
             self.plus[prop]
-        except:
+        except KeyError:
             return False
         return True
 
@@ -389,11 +425,11 @@ Like temporary attributes such as "imported_from", etc.. """
         if self.configuration_errors != []:
             state = False
             for err in self.configuration_errors:
-                logger.error("[item::%s] %s" % (self.get_name(), err))
+                logger.error("[item::%s] %s", self.get_name(), err)
 
         for prop, entry in properties.items():
             if not hasattr(self, prop) and entry.required:
-                logger.warning("[item::%s] %s property is missing" % (self.get_name(), prop))
+                logger.warning("[item::%s] %s property is missing", self.get_name(), prop)
                 state = False
 
         return state
@@ -405,26 +441,27 @@ Like temporary attributes such as "imported_from", etc.. """
     # check_interval. There is a old_parameters tab
     # in Classes that give such modifications to do.
     def old_properties_names_to_new(self):
-        old_properties = self.__class__.old_properties
+        old_properties = getattr(self.__class__, "old_properties", {})
         for old_name, new_name in old_properties.items():
             # Ok, if we got old_name and NO new name,
             # we switch the name
             if hasattr(self, old_name) and not hasattr(self, new_name):
                 value = getattr(self, old_name)
                 setattr(self, new_name, value)
+                delattr(self, old_name)
 
     # The arbiter is asking us our raw value before all explode or linking
     def get_raw_import_values(self):
         r = {}
         properties = self.__class__.properties.keys()
         # Register is not by default in the properties
-        if not 'register' in properties:
+        if 'register' not in properties:
             properties.append('register')
 
         for prop in properties:
             if hasattr(self, prop):
                 v = getattr(self, prop)
-                #print prop, ":", v
+                # print prop, ":", v
                 r[prop] = v
         return r
 
@@ -476,14 +513,18 @@ Like temporary attributes such as "imported_from", etc.. """
     # Look if we got an ack that is too old with an expire date and should
     # be delete
     def check_for_expire_acknowledge(self):
-        if self.acknowledgement and self.acknowledgement.end_time != 0 and self.acknowledgement.end_time < time.time():
+        if (self.acknowledgement and
+                self.acknowledgement.end_time != 0 and
+                self.acknowledgement.end_time < time.time()):
             self.unacknowledge_problem()
 
     #  Delete the acknowledgement object and reset the flag
     #  but do not remove the associated comment.
     def unacknowledge_problem(self):
         if self.problem_has_been_acknowledged:
-            logger.debug("[item::%s] deleting acknowledge of %s" % (self.get_name(), self.get_dbg_name()))
+            logger.debug("[item::%s] deleting acknowledge of %s",
+                         self.get_name(),
+                         self.get_dbg_name())
             self.problem_has_been_acknowledged = False
             # Should not be deleted, a None is Good
             self.acknowledgement = None
@@ -516,7 +557,7 @@ Like temporary attributes such as "imported_from", etc.. """
 
         if hasattr(cls, 'running_properties'):
             for prop, entry in cls.running_properties.items():
-            # Is this property need preparation for sending?
+                # Is this property need preparation for sending?
                 if entry.conf_send_preparation is not None:
                     f = entry.conf_send_preparation
                     if f is not None:
@@ -552,49 +593,46 @@ Like temporary attributes such as "imported_from", etc.. """
         if hasattr(cls, 'running_properties'):
             # We've got prop in running_properties too
             for prop, entry in cls.running_properties.items():
-                #if 'fill_brok' in cls.running_properties[prop]:
+                # if 'fill_brok' in cls.running_properties[prop]:
                 if brok_type in entry.fill_brok:
                     data[prop] = self.get_property_value_for_brok(prop, cls.running_properties)
 
+
     # Get a brok with initial status
     def get_initial_status_brok(self):
-        cls = self.__class__
-        my_type = cls.my_type
         data = {'id': self.id}
-
         self.fill_data_brok_from(data, 'full_status')
-        b = Brok('initial_' + my_type + '_status', data)
-        return b
+        return Brok('initial_' + self.my_type + '_status', data)
+
 
     # Get a brok with update item status
     def get_update_status_brok(self):
-        cls = self.__class__
-        my_type = cls.my_type
-
         data = {'id': self.id}
         self.fill_data_brok_from(data, 'full_status')
-        b = Brok('update_' + my_type + '_status', data)
-        return b
+        return Brok('update_' + self.my_type + '_status', data)
 
     # Get a brok with check_result
     def get_check_result_brok(self):
-        cls = self.__class__
-        my_type = cls.my_type
-
         data = {}
         self.fill_data_brok_from(data, 'check_result')
-        b = Brok(my_type + '_check_result', data)
-        return b
+        return Brok(self.my_type + '_check_result', data)
 
     # Get brok about the new schedule (next_check)
     def get_next_schedule_brok(self):
-        cls = self.__class__
-        my_type = cls.my_type
-
         data = {}
         self.fill_data_brok_from(data, 'next_schedule')
-        b = Brok(my_type + '_next_schedule', data)
-        return b
+        return Brok(self.my_type + '_next_schedule', data)
+
+    # A snapshot brok is alike a check_result, with also a
+    # output from the snapshot command
+    def get_snapshot_brok(self, snap_output, exit_status):
+        data = {
+            'snapshot_output':      snap_output,
+            'snapshot_time':        int(time.time()),
+            'snapshot_exit_status': exit_status,
+        }
+        self.fill_data_brok_from(data, 'check_result')
+        return Brok(self.my_type + '_snapshot', data)
 
     # Link one command property to a class (for globals like oc*p_command)
     def linkify_one_command_with_commands(self, commands, prop):
@@ -621,38 +659,249 @@ Like temporary attributes such as "imported_from", etc.. """
         if src:
             # Change on the fly the characters
             src = src.replace(r'\n', '\n').replace(r'\t', '\t')
-            t = triggers.create_trigger(src, 'inner-trigger-' + self.__class__.my_type + '' + str(self.id))
+            t = triggers.create_trigger(src,
+                                        'inner-trigger-' + self.__class__.my_type + str(self.id))
             if t:
                 # Maybe the trigger factory give me a already existing trigger,
                 # so my name can be dropped
                 self.triggers.append(t.get_name())
 
+
     # Link with triggers. Can be with a "in source" trigger, or a file name
     def linkify_with_triggers(self, triggers):
         # Get our trigger string and trigger names in the same list
-        self.triggers.extend(self.trigger_name)
-        #print "I am linking my triggers", self.get_full_name(), self.triggers
+        self.triggers.extend([self.trigger_name])
+        # print "I am linking my triggers", self.get_full_name(), self.triggers
         new_triggers = []
         for tname in self.triggers:
+            if tname == '':
+                continue
             t = triggers.find_by_name(tname)
             if t:
                 setattr(t, 'trigger_broker_raise_enabled', self.trigger_broker_raise_enabled)
                 new_triggers.append(t)
             else:
-                self.configuration_errors.append('the %s %s does have a unknown trigger_name "%s"' % (self.__class__.my_type, self.get_full_name(), tname))
+                self.configuration_errors.append('the %s %s does have a unknown trigger_name '
+                                                 '"%s"' % (self.__class__.my_type,
+                                                           self.get_full_name(),
+                                                           tname))
         self.triggers = new_triggers
+
+    def dump(self):
+        dmp = {}
+        for prop in self.properties.keys():
+            if not hasattr(self, prop):
+                continue
+            attr = getattr(self, prop)
+            if isinstance(attr, list) and attr and isinstance(attr[0], Item):
+                dmp[prop] = [i.dump() for i in attr]
+            elif isinstance(attr, Item):
+                dmp[prop] = attr.dump()
+            elif attr:
+                dmp[prop] = getattr(self, prop)
+        return dmp
+
+    def _get_name(self):
+        if hasattr(self, 'get_name'):
+            return self.get_name()
+        name = getattr(self, 'name', None)
+        host_name = getattr(self, 'host_name', None)
+        return '%s(host_name=%s)' % (name or 'no-name', host_name or '')
+
 
 
 class Items(object):
-    def __init__(self, items):
+    def __init__(self, items, index_items=True):
         self.items = {}
+        self.name_to_item = {}
+        self.templates = {}
+        self.name_to_template = {}
         self.configuration_warnings = []
         self.configuration_errors = []
+        self.add_items(items, index_items)
+
+    def get_source(self, item):
+        source = getattr(item, 'imported_from', None)
+        if source:
+            return " in %s" % source
+        else:
+            return ""
+
+    def add_items(self, items, index_items):
+        """
+        Add items into the `items` or `templates` container depending on the
+        is_tpl method result.
+
+        :param items:       The items list to add.
+        :param index_items: Flag indicating if the items should be indexed
+                            on the fly.
+        """
         for i in items:
-            self.items[i.id] = i
-        self.templates = {}
-        # We should keep a graph of templates relations
-        self.templates_graph = Graph()
+            if i.is_tpl():
+                self.add_template(i)
+            else:
+                self.add_item(i, index_items)
+
+    def manage_conflict(self, item, name):
+        """
+        Cheks if an object holding the same name already exists in the index.
+
+        If so, it compares their definition order: the lowest definition order
+        is kept. If definiton order equal, an error is risen.Item
+
+        The method returns the item that should be added after it has decided
+        which one should be kept.
+
+        If the new item has precedence over the New existing one, the
+        existing is removed for the new to replace it.
+
+        :param item:    The new item to check for confict
+        :param name:    The exiting object name
+        :return         The retained object
+        """
+        if item.is_tpl():
+            existing = self.name_to_template[name]
+        else:
+            existing = self.name_to_item[name]
+        existing_prio = getattr(
+            existing,
+            "definition_order",
+            existing.properties["definition_order"].default)
+        item_prio = getattr(
+            item,
+            "definition_order",
+            item.properties["definition_order"].default)
+        if existing_prio < item_prio:
+            # Existing item has lower priority, so it has precedence.
+            return existing
+        elif existing_prio > item_prio:
+            # New item has lower priority, so it has precedence.
+            # Existing item will be deleted below
+            pass
+        else:
+            # Don't know which one to keep, lastly defined has precedence
+            objcls = getattr(self.inner_class, "my_type", "[unknown]")
+            mesg = "duplicate %s name %s%s, using lastly defined. You may " \
+                   "manually set the definition_order parameter to avoid " \
+                   "this message." % \
+                   (objcls, name, self.get_source(item))
+            item.configuration_warnings.append(mesg)
+        if item.is_tpl():
+            self.remove_template(existing)
+        else:
+            self.remove_item(existing)
+        return item
+
+    def add_template(self, tpl):
+        """
+        Adds and index a template into the `templates` container.
+
+        :param tpl: The template to add
+        """
+        tpl = self.index_template(tpl)
+        self.templates[tpl.id] = tpl
+
+    def index_template(self, tpl):
+        """
+        Indexes a template by `name` into the `name_to_template` dictionnary.
+
+        :param tpl: The template to index
+        """
+        objcls = self.inner_class.my_type
+        name = getattr(tpl, 'name', '')
+        if not name:
+            mesg = "a %s template has been defined without name%s%s" % \
+                   (objcls, tpl.imported_from, self.get_source(tpl))
+            tpl.configuration_errors.append(mesg)
+        elif name in self.name_to_template:
+            tpl = self.manage_conflict(tpl, name)
+        self.name_to_template[name] = tpl
+        return tpl
+
+    def remove_template(self, tpl):
+        """
+        Removes and unindex a template from the `templates` container.
+
+        :param tpl: The template to remove
+        """
+        try:
+            del self.templates[tpl.id]
+        except KeyError:
+            pass
+        self.unindex_template(tpl)
+
+    def unindex_template(self, tpl):
+        """
+        Unindex a template from the `templates` container.
+
+        :param tpl: The template to unindex
+        """
+        name = getattr(tpl, 'name', '')
+        try:
+            del self.name_to_template[name]
+        except KeyError:
+            pass
+
+    def add_item(self, item, index=True):
+        """Adds an item into our containers, and index it depending on the `index` flag.
+
+        :param item:    The item to add
+        :param index:   Flag indicating if the item should be indexed
+        """
+        name_property = getattr(self.__class__, "name_property", None)
+        if index is True and name_property:
+            item = self.index_item(item)
+        self.items[item.id] = item
+
+    def remove_item(self, item):
+        """Removes (and un-index) an item from our containers.
+
+        :param item: The item to be removed.
+        :type item:  Item  # or subclass of
+        """
+        self.unindex_item(item)
+        self.items.pop(item.id, None)
+
+    def index_item(self, item):
+        """ Indexes an item into our `name_to_item` dictionary.
+        If an object holding the same item's name/key already exists in the index
+        then the conflict is managed by the `manage_conflict` method.
+
+        :param item: The item to index
+        :param name: The optional name to use to index the item
+        """
+        # TODO: simplify this function (along with its opposite: unindex_item)
+        # it's too complex for what it does.
+        # more over:
+        # There are cases (in unindex_item) where some item is tried to be removed
+        # from name_to_item while it's not present in it !
+        # so either it wasn't added or it was added with another key or the item key changed
+        # between the index and unindex calls..
+        #  -> We should simply not have to call unindex_item() with a non-indexed item !
+        name_property = getattr(self.__class__, "name_property", None)
+        # if there is no 'name_property' set(it is None), then the following getattr() will
+        # "hopefully" evaluates to '',
+        # unless some(thing|one) have setattr(item, None, 'with_something'),
+        # which would be rather odd :
+        name = getattr(item, name_property, '')
+        if not name:
+            objcls = self.inner_class.my_type
+            mesg = "a %s item has been defined without %s%s" % \
+                   (objcls, name_property, self.get_source(item))
+            item.configuration_errors.append(mesg)
+        elif name in self.name_to_item:
+            item = self.manage_conflict(item, name)
+        self.name_to_item[name] = item
+        return item
+
+    def unindex_item(self, item):
+        """ Unindex an item from our name_to_item dict.
+        :param item:    The item to unindex
+        """
+        name_property = getattr(self.__class__, "name_property", None)
+        if name_property is None:
+            return
+        self.name_to_item.pop(getattr(item, name_property, ''), None)
 
     def __iter__(self):
         return self.items.itervalues()
@@ -662,12 +911,16 @@ class Items(object):
 
     def __delitem__(self, key):
         try:
+            self.unindex_item(self.items[key])
             del self.items[key]
         except KeyError:  # we don't want it, we do not have it. All is perfect
             pass
 
     def __setitem__(self, key, value):
         self.items[key] = value
+        name_property = getattr(self.__class__, "name_property", None)
+        if name_property:
+            self.index_item(value)
 
     def __getitem__(self, key):
         return self.items[key]
@@ -680,44 +933,8 @@ class Items(object):
             i.compute_hash()
 
 
-    # We create the reversed list so search will be faster
-    # We also create a twins list with id of twins (not the original
-    # just the others, higher twins)
-    def create_reversed_list(self):
-        self.reversed_list = {}
-        self.twins = []
-        name_property = self.__class__.name_property
-        for id in self.items:
-            if hasattr(self.items[id], name_property):
-                name = getattr(self.items[id], name_property)
-                if name not in self.reversed_list:
-                    self.reversed_list[name] = id
-                else:
-                    self.twins.append(id)
-
-
-    def find_id_by_name(self, name):
-        if hasattr(self, 'reversed_list'):
-            if name in self.reversed_list:
-                return self.reversed_list[name]
-            else:
-                return None
-        else:  # ok, an early ask, with no reversed list from now...
-            name_property = self.__class__.name_property
-            for i in self:
-                if hasattr(i, name_property):
-                    i_name = getattr(i, name_property)
-                    if i_name == name:
-                        return i.id
-            return None
-
-
     def find_by_name(self, name):
-        id = self.find_id_by_name(name)
-        if id is not None:
-            return self.items[id]
-        else:
-            return None
+        return self.name_to_item.get(name, None)
 
 
     # Search items using a list of filter callbacks. Each callback is passed
@@ -742,61 +959,64 @@ class Items(object):
         for i in self:
             i.prepare_for_conf_sending()
 
-    
+
     # It's used to change old Nagios2 names to
     # Nagios3 ones
     def old_properties_names_to_new(self):
-        for i in self:
+        for i in itertools.chain(self.items.itervalues(),
+                                 self.templates.itervalues()):
             i.old_properties_names_to_new()
 
     def pythonize(self):
         for id in self.items:
             self.items[id].pythonize()
 
-    def create_tpl_list(self):
-        for id in self.items:
-            i = self.items[id]
-            if i.is_tpl():
-                self.templates[id] = i
-
     def find_tpl_by_name(self, name):
-        for i in self.templates.values():
-            if hasattr(i, 'name') and i.name == name:
-                return i
-        return None
+        return self.name_to_template.get(name, None)
+
+    def get_all_tags(self, item):
+        all_tags = item.get_templates()
+
+        for t in item.templates:
+            all_tags.append(t.name)
+            all_tags.extend(self.get_all_tags(t))
+        return list(set(all_tags))
+
+
+    def linkify_item_templates(self, item):
+        tpls = []
+        tpl_names = item.get_templates()
+
+        for name in tpl_names:
+            t = self.find_tpl_by_name(name)
+            if t is None:
+                # TODO: Check if this should not be better to report as an error ?
+                self.configuration_warnings.append("%s %r use/inherit from an unknown template "
+                                                   "(%r) ! Imported from: "
+                                                   "%s" % (type(item).__name__,
+                                                           item._get_name(),
+                                                           name,
+                                                           item.imported_from))
+            else:
+                if t is item:
+                    self.configuration_errors.append(
+                        '%s %r use/inherits from itself ! Imported from: '
+                        '%s' % (type(item).__name__,
+                                item._get_name(),
+                                item.imported_from))
+                else:
+                    tpls.append(t)
+        item.templates = tpls
 
     # We will link all templates, and create the template
     # graph too
     def linkify_templates(self):
         # First we create a list of all templates
-        self.create_tpl_list()
+        for i in itertools.chain(self.items.itervalues(),
+                                 self.templates.itervalues()):
+            self.linkify_item_templates(i)
         for i in self:
-            tpls = i.get_templates()
-            new_tpls = []
-            for tpl in tpls:
-                tpl = tpl.strip()
-                # We save this template in the 'tags' set
-                i.tags.add(tpl)
-                # Then we link it
-                t = self.find_tpl_by_name(tpl)
-                # If it's ok, add the template and update the
-                # template graph too
-                if t is not None:
-                    # add the template object to us
-                    new_tpls.append(t)
-                else:  # not find? not good!
-                    err = "the template '%s' defined for '%s' is unknown" % (tpl, i.get_name())
-                    i.configuration_warnings.append(err)
-            i.templates = new_tpls
-
-        # Now we will create the template graph, so
-        # we look only for templates here. First we should declare our nodes
-        for tpl in self.templates.values():
-            self.templates_graph.add_node(tpl)
-        # And then really create our edge
-        for tpl in self.templates.values():
-            for father in tpl.templates:
-                self.templates_graph.add_edge(father, tpl)
+            i.tags = self.get_all_tags(i)
 
     def is_correct(self):
         # we are ok at the beginning. Hope we still ok at the end...
@@ -808,16 +1028,18 @@ class Items(object):
             # Ok, look at no twins (it's bad!)
             for id in twins:
                 i = self.items[id]
-                logger.warning("[items] %s.%s is duplicated from %s" %\
-                    (i.__class__.my_type, i.get_name(), getattr(i, 'imported_from', "unknown source")))
+                logger.warning("[items] %s.%s is duplicated from %s",
+                               i.__class__.my_type,
+                               i.get_name(),
+                               getattr(i, 'imported_from', "unknown source"))
 
         # Then look if we have some errors in the conf
         # Juts print warnings, but raise errors
         for err in self.configuration_warnings:
-            logger.warning("[items] %s" % err)
+            logger.warning("[items] %s", err)
 
         for err in self.configuration_errors:
-            logger.error("[items] %s" % err)
+            logger.error("[items] %s", err)
             r = False
 
         # Then look for individual ok
@@ -832,18 +1054,16 @@ class Items(object):
             # Now other checks
             if not i.is_correct():
                 n = getattr(i, 'imported_from', "unknown source")
-                logger.error("[items] In %s is incorrect ; from %s" % (i.get_name(), n))
+                logger.error("[items] In %s is incorrect ; from %s", i.get_name(), n)
                 r = False
 
         return r
 
     def remove_templates(self):
-        """ Remove useless templates (& properties) of our items ; otherwise we could get errors on config.is_correct() """
-        tpls = [i for i in self if i.is_tpl()]
-        for i in tpls:
-            del self[i.id]
+        """ Remove useless templates (& properties) of our items
+            otherwise we could get errors on config.is_correct()
+        """
         del self.templates
-        del self.templates_graph
 
     def clean(self):
         """ Request to remove the unnecessary attributes/others from our items """
@@ -865,54 +1085,35 @@ class Items(object):
 
     # Inheritance for just a property
     def apply_partial_inheritance(self, prop):
-        for i in self:
-            i.get_property_by_inheritance(self, prop)
-            if not i.is_tpl():
-                # If a "null" attribute was inherited, delete it
-                try:
-                    if getattr(i, prop) == 'null':
-                        delattr(i, prop)
-                except:
-                    pass
+        for i in itertools.chain(self.items.itervalues(),
+                                 self.templates.itervalues()):
+            i.get_property_by_inheritance(prop)
+            # If a "null" attribute was inherited, delete it
+            try:
+                if getattr(i, prop) == 'null':
+                    delattr(i, prop)
+            except AttributeError:
+                pass
 
     def apply_inheritance(self):
+        """ For all items and templates inherite properties and custom
+            variables.
+        """
         # We check for all Class properties if the host has it
         # if not, it check all host templates for a value
         cls = self.inner_class
         for prop in cls.properties:
             self.apply_partial_inheritance(prop)
-        for i in self:
-            i.get_customs_properties_by_inheritance(self)
-
-    # We remove twins
-    # Remember: item id respect the order of conf. So if and item
-    #  is defined multiple times,
-    # we want to keep the first one.
-    # Services are also managed here but they are specials:
-    # We remove twins services with the same host_name/service_description
-    # Remember: host service are take into account first before hostgroup service
-    # Id of host service are lower than hostgroups one, so they are
-    # in self.twins_services
-    # and we can remove them.
-    def remove_twins(self):
-        for id in self.twins:
-            i = self.items[id]
-            type = i.__class__.my_type
-            logger.warning("[items] %s.%s is already defined '%s'" % (type, i.get_name(), getattr(i, 'imported_from', "unknown source")))
-            del self[id]  # bye bye
-        # do not remove twins, we should look in it, but just void it
-        self.twins = []
-        #del self.twins #no more need
-
-
+        for i in itertools.chain(self.items.itervalues(),
+                                 self.templates.itervalues()):
+            i.get_customs_properties_by_inheritance()
 
     # We've got a contacts property with , separated contacts names
     # and we want have a list of Contacts
     def linkify_with_contacts(self, contacts):
         for i in self:
             if hasattr(i, 'contacts'):
-                contacts_tab = i.contacts.split(',')
-                contacts_tab = strip_and_uniq(contacts_tab)
+                contacts_tab = strip_and_uniq(i.contacts)
                 new_contacts = []
                 for c_name in contacts_tab:
                     if c_name != '':
@@ -922,7 +1123,8 @@ class Items(object):
                         # Else: Add in the errors tab.
                         # will be raised at is_correct
                         else:
-                            err = "the contact '%s' defined for '%s' is unknown" % (c_name, i.get_name())
+                            err = "the contact '%s' defined for '%s' is unknown" % (c_name,
+                                                                                    i.get_name())
                             i.configuration_errors.append(err)
                 # Get the list, but first make elements uniq
                 i.contacts = list(set(new_contacts))
@@ -931,15 +1133,15 @@ class Items(object):
     def linkify_with_escalations(self, escalations):
         for i in self:
             if hasattr(i, 'escalations'):
-                escalations_tab = i.escalations.split(',')
-                escalations_tab = strip_and_uniq(escalations_tab)
+                escalations_tab = strip_and_uniq(i.escalations)
                 new_escalations = []
                 for es_name in [e for e in escalations_tab if e != '']:
                     es = escalations.find_by_name(es_name)
                     if es is not None:
                         new_escalations.append(es)
                     else:  # Escalation not find, not good!
-                        err = "the escalation '%s' defined for '%s' is unknown" % (es_name, i.get_name())
+                        err = "the escalation '%s' defined for '%s' is unknown" % (es_name,
+                                                                                   i.get_name())
                         i.configuration_errors.append(err)
                 i.escalations = new_escalations
 
@@ -947,15 +1149,15 @@ class Items(object):
     def linkify_with_resultmodulations(self, resultmodulations):
         for i in self:
             if hasattr(i, 'resultmodulations'):
-                resultmodulations_tab = i.resultmodulations.split(',')
-                resultmodulations_tab = strip_and_uniq(resultmodulations_tab)
+                resultmodulations_tab = strip_and_uniq(i.resultmodulations)
                 new_resultmodulations = []
                 for rm_name in resultmodulations_tab:
                     rm = resultmodulations.find_by_name(rm_name)
                     if rm is not None:
                         new_resultmodulations.append(rm)
                     else:
-                        err = "the result modulation '%s' defined on the %s '%s' do not exist" % (rm_name, i.__class__.my_type, i.get_name())
+                        err = ("the result modulation '%s' defined on the %s "
+                               "'%s' do not exist" % (rm_name, i.__class__.my_type, i.get_name()))
                         i.configuration_warnings.append(err)
                         continue
                 i.resultmodulations = new_resultmodulations
@@ -964,15 +1166,15 @@ class Items(object):
     def linkify_with_business_impact_modulations(self, business_impact_modulations):
         for i in self:
             if hasattr(i, 'business_impact_modulations'):
-                business_impact_modulations_tab = i.business_impact_modulations.split(',')
-                business_impact_modulations_tab = strip_and_uniq(business_impact_modulations_tab)
+                business_impact_modulations_tab = strip_and_uniq(i.business_impact_modulations)
                 new_business_impact_modulations = []
                 for rm_name in business_impact_modulations_tab:
                     rm = business_impact_modulations.find_by_name(rm_name)
                     if rm is not None:
                         new_business_impact_modulations.append(rm)
                     else:
-                        err = "the business impact modulation '%s' defined on the %s '%s' do not exist" % (rm_name, i.__class__.my_type, i.get_name())
+                        err = ("the business impact modulation '%s' defined on the %s "
+                               "'%s' do not exist" % (rm_name, i.__class__.my_type, i.get_name()))
                         i.configuration_errors.append(err)
                         continue
                 i.business_impact_modulations = new_business_impact_modulations
@@ -980,27 +1182,29 @@ class Items(object):
     # If we've got a contact_groups properties, we search for all
     # theses groups and ask them their contacts, and then add them
     # all into our contacts property
-    def explode_contact_groups_into_contacts(self, contactgroups):
-        for i in self:
-            if hasattr(i, 'contact_groups'):
-                if isinstance(i.contact_groups, list):
-                    cgnames = i.contact_groups
-                else:
-                    cgnames = i.contact_groups.split(',')
-                cgnames = strip_and_uniq(cgnames)
-                for cgname in cgnames:
-                    cg = contactgroups.find_by_name(cgname)
-                    if cg is None:
-                        err = "The contact group '%s' defined on the %s '%s' do not exist" % (cgname, i.__class__.my_type, i.get_name())
-                        i.configuration_errors.append(err)
-                        continue
-                    cnames = contactgroups.get_members_by_name(cgname)
-                    # We add contacts into our contacts
-                    if cnames != []:
-                        if hasattr(i, 'contacts'):
-                            i.contacts += ',' + cnames
-                        else:
-                            i.contacts = cnames
+    def explode_contact_groups_into_contacts(self, item, contactgroups):
+        if hasattr(item, 'contact_groups'):
+            # TODO : See if we can remove this if
+            if isinstance(item.contact_groups, list):
+                cgnames = item.contact_groups
+            else:
+                cgnames = item.contact_groups.split(',')
+            cgnames = strip_and_uniq(cgnames)
+            for cgname in cgnames:
+                cg = contactgroups.find_by_name(cgname)
+                if cg is None:
+                    err = "The contact group '%s' defined on the %s '%s' do " \
+                          "not exist" % (cgname, item.__class__.my_type,
+                                         item.get_name())
+                    item.configuration_errors.append(err)
+                    continue
+                cnames = contactgroups.get_members_by_name(cgname)
+                # We add contacts into our contacts
+                if cnames != []:
+                    if hasattr(item, 'contacts'):
+                        item.contacts.extend(cnames)
+                    else:
+                        item.contacts = cnames
 
     # Link a timeperiod property (prop)
     def linkify_with_timeperiods(self, timeperiods, prop):
@@ -1016,21 +1220,22 @@ class Items(object):
                 tp = timeperiods.find_by_name(tpname)
                 # If not found, it's an error
                 if tp is None:
-                    err = "The %s of the %s '%s' named '%s' is unknown!" % (prop, i.__class__.my_type, i.get_name(), tpname)
+                    err = ("The %s of the %s '%s' named "
+                           "'%s' is unknown!" % (prop, i.__class__.my_type, i.get_name(), tpname))
                     i.configuration_errors.append(err)
                     continue
                 # Got a real one, just set it :)
                 setattr(i, prop, tp)
 
-    def create_commandcall(self,prop, commands, command):
+    def create_commandcall(self, prop, commands, command):
         comandcall = dict(commands=commands, call=command)
         if hasattr(prop, 'enable_environment_macros'):
             comandcall['enable_environment_macros'] = prop.enable_environment_macros
 
         if hasattr(prop, 'poller_tag'):
-            comandcall['poller_tag']=prop.poller_tag
+            comandcall['poller_tag'] = prop.poller_tag
         elif hasattr(prop, 'reactionner_tag'):
-            comandcall['reactionner_tag']=prop.reactionner_tag
+            comandcall['reactionner_tag'] = prop.reactionner_tag
 
         return CommandCall(**comandcall)
 
@@ -1052,8 +1257,7 @@ class Items(object):
     def linkify_command_list_with_commands(self, commands, prop):
         for i in self:
             if hasattr(i, prop):
-                coms = getattr(i, prop).split(',')
-                coms = strip_and_uniq(coms)
+                coms = strip_and_uniq(getattr(i, prop))
                 com_list = []
                 for com in coms:
                     if com != '':
@@ -1082,7 +1286,8 @@ class Items(object):
                 if cw is not None:
                     new_checkmodulations.append(cw)
                 else:
-                    err = "The checkmodulations of the %s '%s' named '%s' is unknown!" % (i.__class__.my_type, i.get_name(), cw_name)
+                    err = ("The checkmodulations of the %s '%s' named "
+                           "'%s' is unknown!" % (i.__class__.my_type, i.get_name(), cw_name))
                     i.configuration_errors.append(err)
             # Get the list, but first make elements uniq
             i.checkmodulations = new_checkmodulations
@@ -1100,7 +1305,8 @@ class Items(object):
                 if cw is not None:
                     new_macromodulations.append(cw)
                 else:
-                    err = "The macromodulations of the %s '%s' named '%s' is unknown!" % (i.__class__.my_type, i.get_name(), cw_name)
+                    err = ("The macromodulations of the %s '%s' named "
+                           "'%s' is unknown!" % (i.__class__.my_type, i.get_name(), cw_name))
                     i.configuration_errors.append(err)
             # Get the list, but first make elements uniq
             i.macromodulations = new_macromodulations
@@ -1117,7 +1323,6 @@ class Items(object):
                     continue
 
                 plug = modules.find_by_name(plug_name)
-                print plug
                 if plug is not None:
                     new_modules.append(plug)
                 else:
@@ -1125,76 +1330,153 @@ class Items(object):
                     s.configuration_errors.append(err)
             s.modules = new_modules
 
-
     def evaluate_hostgroup_expression(self, expr, hosts, hostgroups, look_in='hostgroups'):
-        #print "\n"*10, "looking for expression", expr
+        # print "\n"*10, "looking for expression", expr
         # Maybe exp is a list, like numerous hostgroups entries in a service, link them
         if isinstance(expr, list):
             expr = '|'.join(expr)
-        #print "\n"*10, "looking for expression", expr        
-        if look_in=='hostgroups':
+        # print "\n"*10, "looking for expression", expr
+        if look_in == 'hostgroups':
             f = ComplexExpressionFactory(look_in, hostgroups, hosts)
-        else: # templates
+        else:  # templates
             f = ComplexExpressionFactory(look_in, hosts, hosts)
         expr_tree = f.eval_cor_pattern(expr)
 
-        #print "RES of ComplexExpressionFactory"
-        #print expr_tree
+        # print "RES of ComplexExpressionFactory"
+        # print expr_tree
 
-        #print "Try to resolve the Tree"
+        # print "Try to resolve the Tree"
         set_res = expr_tree.resolve_elements()
-        #print "R2d2 final is", set_res
+        # print "R2d2 final is", set_res
 
         # HOOK DBG
         return list(set_res)
 
+    def get_hosts_from_hostgroups(self, hgname, hostgroups):
+        if not isinstance(hgname, list):
+            hgname = [e.strip() for e in hgname.split(',') if e.strip()]
 
+        host_names = []
+
+        for name in hgname:
+            hg = hostgroups.find_by_name(name)
+            if hg is None:
+                raise ValueError("the hostgroup '%s' is unknown" % hgname)
+            mbrs = [h.strip() for h in hg.get_hosts() if h.strip()]
+            host_names.extend(mbrs)
+        return host_names
 
     # If we've got a hostgroup_name property, we search for all
     # theses groups and ask them their hosts, and then add them
     # all into our host_name property
-    def explode_host_groups_into_hosts(self, hosts, hostgroups):
-        for i in self:
-            hnames_list = []
-            if hasattr(i, 'hostgroup_name'):
-                hnames_list.extend(self.evaluate_hostgroup_expression(i.hostgroup_name, hosts, hostgroups))
+    def explode_host_groups_into_hosts(self, item, hosts, hostgroups):
+        hnames_list = []
+        # Gets item's hostgroup_name
+        hgnames = getattr(item, "hostgroup_name", '')
 
-            # Maybe there is no host in the groups, and do not have any
-            # host_name too, so tag is as template to do not look at
-            if hnames_list == [] and not hasattr(i, 'host_name'):
-                i.register = '0'
+        # Defines if hostgroup is a complex expression
+        # Expands hostgroups
+        if is_complex_expr(hgnames):
+            hnames_list.extend(self.evaluate_hostgroup_expression(
+                item.hostgroup_name, hosts, hostgroups))
+        elif hgnames:
+            try:
+                hnames_list.extend(
+                    self.get_hosts_from_hostgroups(hgnames, hostgroups))
+            except ValueError, e:
+                item.configuration_errors.append(str(e))
 
-            if hasattr(i, 'host_name'):
-                hst = i.host_name.split(',')
-                for h in hst:
-                    h = h.strip()
-                    # If the host start with a !, it's to be removed from
-                    # the hostgroup get list
-                    if h.startswith('!'):
-                        hst_to_remove = h[1:].strip()
-                        try:
-                            hnames_list.remove(hst_to_remove)
-                        # was not in it
-                        except ValueError:
-                            pass
-                    # Else it's an host to add, but maybe it's ALL
-                    elif h == '*':
-                        for newhost in  set(h.host_name for h in hosts.items.values() \
-                                            if getattr(h, 'host_name', '') != '' and not h.is_tpl()):
-                            hnames_list.append(newhost)
-                            #print "DBG in item.explode_host_groups_into_hosts , added '%s' to group '%s'" % (newhost, i)
-                    else:
-                        hnames_list.append(h)
+        # Expands host names
+        hname = getattr(item, "host_name", '')
+        hnames_list.extend([n.strip() for n in hname.split(',') if n.strip()])
+        hnames = set()
 
-            i.host_name = ','.join(list(set(hnames_list)))
+        for h in hnames_list:
+            # If the host start with a !, it's to be removed from
+            # the hostgroup get list
+            if h.startswith('!'):
+                hst_to_remove = h[1:].strip()
+                try:
+                    hnames.remove(hst_to_remove)
+                except KeyError:
+                    pass
+            elif h == '*':
+                [hnames.add(h.host_name) for h in hosts.items.itervalues()
+                 if getattr(h, 'host_name', '')]
+            # Else it's a host to add, but maybe it's ALL
+            else:
+                hnames.add(h)
 
-            # Ok, even with all of it, there is still no host, put it as a template
-            if i.host_name == '':
-                i.register = '0'
-
+        item.host_name = ','.join(hnames)
 
     # Take our trigger strings and create true objects with it
     def explode_trigger_string_into_triggers(self, triggers):
         for i in self:
             i.explode_trigger_string_into_triggers(triggers)
 
+    # Parent graph: use to find quickly relations between all item, and loop
+    # return True if there is a loop
+    def no_loop_in_parents(self, attr1, attr2):
+        """ Find loop in dependencies.
+        For now, used with the following attributes :
+        :(self, parents):
+            host dependencies from host object
+        :(host_name, dependent_host_name):\
+            host dependencies from hostdependencies object
+        :(service_description, dependent_service_description):
+            service dependencies from servicedependencies object
+        """
+
+        # Ok, we say "from now, no loop :) "
+        r = True
+
+        # Create parent graph
+        parents = Graph()
+
+        # Start with all items as nodes
+        for item in self:
+            # Hack to get self here. Used when looping on host and host parent's
+            if attr1 == "self":
+                obj = item          # obj is a host/service [list]
+            else:
+                obj = getattr(item, attr1, None)
+            if obj is not None:
+                if isinstance(obj, list):
+                    for sobj in obj:
+                        parents.add_node(sobj)
+                else:
+                    parents.add_node(obj)
+
+        # And now fill edges
+        for item in self:
+            if attr1 == "self":
+                obj1 = item
+            else:
+                obj1 = getattr(item, attr1, None)
+            obj2 = getattr(item, attr2, None)
+            if obj2 is not None:
+                if isinstance(obj2, list):
+                    for sobj2 in obj2:
+                        if isinstance(obj1, list):
+                            for sobj1 in obj1:
+                                parents.add_edge(sobj1, sobj2)
+                        else:
+                            parents.add_edge(obj1, sobj2)
+                else:
+                    if isinstance(obj1, list):
+                        for sobj1 in obj1:
+                            parents.add_edge(sobj1, obj2)
+                    else:
+                        parents.add_edge(obj1, obj2)
+
+        # Now get the list of all item in a loop
+        items_in_loops = parents.loop_check()
+
+        # and raise errors about it
+        for item in items_in_loops:
+            logger.error("The %s object '%s'  is part of a circular parent/child chain!",
+                         item.my_type,
+                         item.get_name())
+            r = False
+
+        return r

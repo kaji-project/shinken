@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2009-2010:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #
@@ -18,10 +18,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Shinken.  If not, see <http://www.gnu.org/licenses/>.
 
-#
-# This file is used to test reading and processing of config files
-#
-
 from shinken_test import *
 
 
@@ -38,28 +34,39 @@ class TestInheritanceAndPlus(ShinkenTest):
         print "Get the hosts and services"
         now = time.time()
         linux = self.sched.hostgroups.find_by_name('linux')
-        self.assert_(linux is not None)
+        self.assertIsNot(linux, None)
         dmz = self.sched.hostgroups.find_by_name('DMZ')
-        self.assert_(dmz is not None)
+        self.assertIsNot(dmz, None)
         mysql = self.sched.hostgroups.find_by_name('mysql')
-        self.assert_(mysql is not None)
+        self.assertIsNot(mysql, None)
 
         host1 = self.sched.hosts.find_by_name("test-server1")
         host2 = self.sched.hosts.find_by_name("test-server2")
         # HOST 1 is lin-servers,dmz, so should be in linux AND DMZ group
         for hg in host1.hostgroups:
             print hg.get_name()
-        self.assert_(linux in host1.hostgroups)
-        self.assert_(dmz in host1.hostgroups)
+        self.assertIn(linux.get_name(), [hg.get_name() for hg in host1.hostgroups])
+        self.assertIn(dmz.get_name(), [hg.get_name() for hg in host1.hostgroups])
 
         # HOST2 is in lin-servers,dmz and +mysql, so all three of them
         for hg in host2.hostgroups:
             print hg.get_name()
-        self.assert_(linux in host2.hostgroups)
-        self.assert_(dmz in host2.hostgroups)
-        self.assert_(mysql in host2.hostgroups)
+        self.assertIn(linux.get_name(), [hg.get_name() for hg in host2.hostgroups])
+        self.assertIn(dmz.get_name(), [hg.get_name() for hg in host2.hostgroups])
+        self.assertIn(mysql.get_name(), [hg.get_name() for hg in host2.hostgroups])
 
+    def test_pack_like_inheritance(self):
+        # get our pack service
+        host = self.sched.hosts.find_by_name('pack-host')
+        service = host.find_service_by_name('CHECK-123')
 
+        # it should exist
+        self.assertIsNotNone(service)
+
+        # it should contain the custom variable `_CUSTOM_123` because custom
+        # variables are always stored in upper case
+        customs = service.customs
+        self.assertIn('_CUSTOM_123', customs)
 
 
 if __name__ == '__main__':

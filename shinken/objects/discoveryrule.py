@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -23,7 +23,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Shinken.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
 from copy import copy
 
 from item import Item, Items
@@ -41,15 +40,16 @@ class Discoveryrule(MatchingItem):
     properties.update({
         'discoveryrule_name':    StringProp(),
         'creation_type':         StringProp(default='service'),
-        'discoveryrule_order':   IntegerProp(default='0'),
-        ## 'check_command':         StringProp (),
-        ## 'service_description':   StringProp (),
-        ## 'use':                   StringProp(),
+        'discoveryrule_order':   IntegerProp(default=0),
+        # 'check_command':         StringProp (),
+        # 'service_description':   StringProp (),
+        # 'use':                   StringProp(),
     })
 
     running_properties = {
+        'configuration_warnings':   ListProp(default=[]),
         'configuration_errors': ListProp(default=[]),
-        }
+    }
 
     macros = {}
 
@@ -75,12 +75,12 @@ class Discoveryrule(MatchingItem):
             params[key] = self.compact_unique_attr_value(params[key])
 
         # Get the properties of the Class we want
-        if not 'creation_type' in params:
+        if 'creation_type' not in params:
             params['creation_type'] = 'service'
 
         map = {'service': Service, 'host': Host}
         t = params['creation_type']
-        if not t in map:
+        if t not in map:
             return
         tcls = map[t]
 
@@ -97,7 +97,11 @@ class Discoveryrule(MatchingItem):
             # Some key are quite special
             if key in cls.properties:
                 setattr(self, key, params[key])
-            elif key in ['use'] or key.startswith('+') or key.startswith('-') or key in tcls.properties or key.startswith('_'):
+            elif (key in ['use'] or
+                  key.startswith('+') or
+                  key.startswith('-') or
+                  key in tcls.properties or
+                  key.startswith('_')):
                 self.writing_properties[key] = params[key]
             else:
                 if key.startswith('!'):

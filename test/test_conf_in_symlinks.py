@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2009-2010:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #
@@ -36,12 +36,8 @@ class TestConfigWithSymlinks(ShinkenTest):
     def test_symlinks(self):
         if os.name == 'nt':
             return
-        if sys.version_info < (2 , 6):
-            print "************* WARNING********"*200
-            print "On python 2.4 and 2.5, the symlinks following is NOT managed"
-            return
         svc = self.sched.services.find_srv_by_name_and_hostname("test_host_0", "test_HIDDEN")
-        self.assert_(svc is not None)
+        self.assertIsNot(svc, None)
 
 
 if __name__ == '__main__':

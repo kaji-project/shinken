@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -39,11 +39,10 @@ class Businessimpactmodulation(Item):
     my_type = 'businessimpactmodulation'
 
     properties = Item.properties.copy()
-    properties.update({
-            'business_impact_modulation_name': StringProp(),
-            'business_impact':                IntegerProp(),
-            'modulation_period':        StringProp(default=None),
-    })
+    properties.update({'business_impact_modulation_name': StringProp(),
+                       'business_impact':                 IntegerProp(),
+                       'modulation_period':               StringProp(default=''),
+                       })
 
     # For debugging purpose only (nice name)
     def get_name(self):
@@ -67,7 +66,8 @@ class Businessimpactmodulations(Items):
             mtp = timeperiods.find_by_name(mtp_name)
 
             if mtp_name != '' and mtp is None:
-                err = "Error: the business impact modulation '%s' got an unknown modulation_period '%s'" % (rm.get_name(), mtp_name)
+                err = ("Error: the business impact modulation '%s' got an unknown "
+                       "modulation_period '%s'" % (rm.get_name(), mtp_name))
                 rm.configuration_errors.append(err)
 
             rm.modulation_period = mtp

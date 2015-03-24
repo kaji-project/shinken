@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -26,18 +26,22 @@
 from item import Item, Items
 
 from shinken.util import strip_and_uniq
-from shinken.property import BoolProp, IntegerProp, StringProp
-from shinken.log import logger, console_logger
+from shinken.property import BoolProp, IntegerProp, StringProp, ListProp
+from shinken.log import logger, naglog_result
 
-_special_properties = ('service_notification_commands', 'host_notification_commands',
-                        'service_notification_period', 'host_notification_period',
-                        'service_notification_options', 'host_notification_options',
-                        'host_notification_commands', 'contact_name')
+_special_properties = (
+    'service_notification_commands', 'host_notification_commands',
+    'service_notification_period', 'host_notification_period',
+    'service_notification_options', 'host_notification_options',
+    'host_notification_commands', 'contact_name'
+)
 
-_simple_way_parameters = ('service_notification_period', 'host_notification_period',
-                           'service_notification_options', 'host_notification_options',
-                           'service_notification_commands', 'host_notification_commands',
-                           'min_business_impact')
+_simple_way_parameters = (
+    'service_notification_period', 'host_notification_period',
+    'service_notification_options', 'host_notification_options',
+    'service_notification_commands', 'host_notification_commands',
+    'min_business_impact'
+)
 
 
 class Contact(Item):
@@ -48,16 +52,19 @@ class Contact(Item):
     properties.update({
         'contact_name':     StringProp(fill_brok=['full_status']),
         'alias':            StringProp(default='none', fill_brok=['full_status']),
-        'contactgroups':    StringProp(default='', fill_brok=['full_status']),
-        'host_notifications_enabled': BoolProp(default='1', fill_brok=['full_status']),
-        'service_notifications_enabled': BoolProp(default='1', fill_brok=['full_status']),
+        'contactgroups':    ListProp(default=[], fill_brok=['full_status']),
+        'host_notifications_enabled': BoolProp(default=True, fill_brok=['full_status']),
+        'service_notifications_enabled': BoolProp(default=True, fill_brok=['full_status']),
         'host_notification_period': StringProp(fill_brok=['full_status']),
         'service_notification_period': StringProp(fill_brok=['full_status']),
-        'host_notification_options': StringProp(fill_brok=['full_status']),
-        'service_notification_options': StringProp(fill_brok=['full_status']),
-        'host_notification_commands': StringProp(fill_brok=['full_status']),
-        'service_notification_commands': StringProp(fill_brok=['full_status']),
-        'min_business_impact':    IntegerProp(default='0', fill_brok=['full_status']),
+        'host_notification_options': ListProp(default=[''], fill_brok=['full_status'],
+                                              split_on_coma=True),
+        'service_notification_options': ListProp(default=[''], fill_brok=['full_status'],
+                                                 split_on_coma=True),
+        # To be consistent with notificationway object attributes
+        'host_notification_commands': ListProp(fill_brok=['full_status']),
+        'service_notification_commands': ListProp(fill_brok=['full_status']),
+        'min_business_impact':    IntegerProp(default=0, fill_brok=['full_status']),
         'email':            StringProp(default='none', fill_brok=['full_status']),
         'pager':            StringProp(default='none', fill_brok=['full_status']),
         'address1':         StringProp(default='none', fill_brok=['full_status']),
@@ -66,10 +73,11 @@ class Contact(Item):
         'address4':         StringProp(default='none', fill_brok=['full_status']),
         'address5':         StringProp(default='none', fill_brok=['full_status']),
         'address6':         StringProp(default='none', fill_brok=['full_status']),
-        'can_submit_commands': BoolProp(default='0', fill_brok=['full_status']),
-        'is_admin':         BoolProp(default='0', fill_brok=['full_status']),
-        'retain_status_information': BoolProp(default='1', fill_brok=['full_status']),
-        'notificationways': StringProp(default='', fill_brok=['full_status']),
+        'can_submit_commands': BoolProp(default=False, fill_brok=['full_status']),
+        'is_admin':         BoolProp(default=False, fill_brok=['full_status']),
+        'expert':           BoolProp(default=False, fill_brok=['full_status']),
+        'retain_status_information': BoolProp(default=True, fill_brok=['full_status']),
+        'notificationways': ListProp(default=[], fill_brok=['full_status']),
         'password':        StringProp(default='NOPASSWORDSET', fill_brok=['full_status']),
     })
 
@@ -169,7 +177,7 @@ class Contact(Item):
         for prop, entry in cls.properties.items():
             if prop not in _special_properties:
                 if not hasattr(self, prop) and entry.required:
-                    logger.error("[contact::%s] %s property not set" % (self.get_name(), prop))
+                    logger.error("[contact::%s] %s property not set", self.get_name(), prop)
                     state = False  # Bad boy...
 
         # There is a case where there is no nw: when there is not special_prop defined
@@ -177,13 +185,14 @@ class Contact(Item):
         if self.notificationways == []:
             for p in _special_properties:
                 if not hasattr(self, p):
-                    logger.error("[contact::%s] %s property is missing" % (self.get_name(), p))
+                    logger.error("[contact::%s] %s property is missing", self.get_name(), p)
                     state = False
 
         if hasattr(self, 'contact_name'):
             for c in cls.illegal_object_name_chars:
                 if c in self.contact_name:
-                    logger.error("[contact::%s] %s character not allowed in contact_name" % (self.get_name(), c))
+                    logger.error("[contact::%s] %s character not allowed in contact_name",
+                                 self.get_name(), c)
                     state = False
         else:
             if hasattr(self, 'alias'):  # take the alias if we miss the contact_name
@@ -192,25 +201,25 @@ class Contact(Item):
         return state
 
     # Raise a log entry when a downtime begins
-    # CONTACT DOWNTIME ALERT: test_contact;STARTED; Contact has entered a period of scheduled downtime
+    # CONTACT DOWNTIME ALERT:
+    #  test_contact;STARTED; Contact has entered a period of scheduled downtime
     def raise_enter_downtime_log_entry(self):
-        console_logger.info("CONTACT DOWNTIME ALERT: %s;STARTED; Contact has "
-                            "entered a period of scheduled downtime"
-                            % self.get_name())
+        naglog_result('info', "CONTACT DOWNTIME ALERT: %s;STARTED; Contact has "
+                      "entered a period of scheduled downtime" % self.get_name())
 
     # Raise a log entry when a downtime has finished
-    # CONTACT DOWNTIME ALERT: test_contact;STOPPED; Contact has exited from a period of scheduled downtime
+    # CONTACT DOWNTIME ALERT:
+    #  test_contact;STOPPED; Contact has exited from a period of scheduled downtime
     def raise_exit_downtime_log_entry(self):
-        console_logger.info("CONTACT DOWNTIME ALERT: %s;STOPPED; Contact has "
-                            "exited from a period of scheduled downtime"
-                            % self.get_name())
+        naglog_result('info', "CONTACT DOWNTIME ALERT: %s;STOPPED; Contact has "
+                      "exited from a period of scheduled downtime" % self.get_name())
 
     # Raise a log entry when a downtime prematurely ends
-    # CONTACT DOWNTIME ALERT: test_contact;CANCELLED; Contact has entered a period of scheduled downtime
+    # CONTACT DOWNTIME ALERT:
+    # test_contact;CANCELLED; Contact has entered a period of scheduled downtime
     def raise_cancel_downtime_log_entry(self):
-        console_logger.info("CONTACT DOWNTIME ALERT: %s;CANCELLED; Scheduled "
-                            "downtime for contact has been cancelled."
-                            % self.get_name())
+        naglog_result('info', "CONTACT DOWNTIME ALERT: %s;CANCELLED; Scheduled "
+                      "downtime for contact has been cancelled." % self.get_name())
 
 
 class Contacts(Items):
@@ -218,10 +227,10 @@ class Contacts(Items):
     inner_class = Contact
 
     def linkify(self, timeperiods, commands, notificationways):
-        #self.linkify_with_timeperiods(timeperiods, 'service_notification_period')
-        #self.linkify_with_timeperiods(timeperiods, 'host_notification_period')
-        #self.linkify_command_list_with_commands(commands, 'service_notification_commands')
-        #self.linkify_command_list_with_commands(commands, 'host_notification_commands')
+        # self.linkify_with_timeperiods(timeperiods, 'service_notification_period')
+        # self.linkify_with_timeperiods(timeperiods, 'host_notification_period')
+        # self.linkify_command_list_with_commands(commands, 'service_notification_commands')
+        # self.linkify_command_list_with_commands(commands, 'host_notification_commands')
         self.linkify_with_notificationways(notificationways)
 
     # We've got a notificationways property with , separated contacts names
@@ -231,16 +240,16 @@ class Contacts(Items):
             if not hasattr(i, 'notificationways'):
                 continue
             new_notificationways = []
-            for nw_name in strip_and_uniq(i.notificationways.split(',')):
+            for nw_name in strip_and_uniq(i.notificationways):
                 nw = notificationways.find_by_name(nw_name)
                 if nw is not None:
                     new_notificationways.append(nw)
                 else:
-                    err = "The 'notificationways' of the %s '%s' named '%s' is unknown!" % (i.__class__.my_type, i.get_name(), nw_name)
+                    err = "The 'notificationways' of the %s '%s' named '%s' is unknown!" %\
+                          (i.__class__.my_type, i.get_name(), nw_name)
                     i.configuration_errors.append(err)
             # Get the list, but first make elements uniq
             i.notificationways = list(set(new_notificationways))
-
 
     def late_linkify_c_by_commands(self, commands):
         for i in self:
@@ -261,33 +270,31 @@ class Contacts(Items):
 
         # Register ourself into the contactsgroups we are in
         for c in self:
-            if c.is_tpl() or not (hasattr(c, 'contact_name') and hasattr(c, 'contactgroups')):
+            if not (hasattr(c, 'contact_name') and hasattr(c, 'contactgroups')):
                 continue
-            for cg in c.contactgroups.split(','):
+            for cg in c.contactgroups:
                 contactgroups.add_member(c.contact_name, cg.strip())
 
         # Now create a notification way with the simple parameter of the
         # contacts
         for c in self:
-            if not c.is_tpl():
-                need_notificationway = False
-                params = {}
-                for p in _simple_way_parameters:
-                    if hasattr(c, p):
-                        need_notificationway = True
-                        params[p] = getattr(c, p)
-                    else:  # put a default text value
-                        # Remove the value and put a default value
-                        setattr(c, p, '')
+            need_notificationway = False
+            params = {}
+            for p in _simple_way_parameters:
+                if hasattr(c, p):
+                    need_notificationway = True
+                    params[p] = getattr(c, p)
+                else:  # put a default text value
+                    # Remove the value and put a default value
+                    setattr(c, p, c.properties[p].default)
 
+            if need_notificationway:
+                # print "Create notif way with", params
+                cname = getattr(c, 'contact_name', getattr(c, 'alias', ''))
+                nw_name = cname + '_inner_notificationway'
+                notificationways.new_inner_member(nw_name, params)
 
-                if need_notificationway:
-                    #print "Create notif way with", params
-                    cname = getattr(c, 'contact_name', getattr(c, 'alias', ''))
-                    nw_name = cname + '_inner_notificationway'
-                    notificationways.new_inner_member(nw_name, params)
-
-                    if not hasattr(c, 'notificationways'):
-                        c.notificationways = nw_name
-                    else:
-                        c.notificationways = c.notificationways + ',' + nw_name
+                if not hasattr(c, 'notificationways'):
+                    c.notificationways = [nw_name]
+                else:
+                    c.notificationways.append(nw_name)

@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #     Gabes Jean, naparuba@gmail.com
 #     Gerhard Lausser, Gerhard.Lausser@consol.de
 #     Gregory Starck, g.starck@gmail.com
@@ -46,14 +46,14 @@ class Notification(Action):
         'notification_type':   IntegerProp(default=0, fill_brok=['full_status']),
         'start_time':          StringProp(default=0, fill_brok=['full_status']),
         'end_time':            StringProp(default=0, fill_brok=['full_status']),
-        'contact_name':        StringProp(default='',fill_brok=['full_status']),
-        'host_name':           StringProp(default='',fill_brok=['full_status']),
-        'service_description': StringProp(default='',fill_brok=['full_status']),
+        'contact_name':        StringProp(default='', fill_brok=['full_status']),
+        'host_name':           StringProp(default='', fill_brok=['full_status']),
+        'service_description': StringProp(default='', fill_brok=['full_status']),
         'reason_type':         StringProp(default=0, fill_brok=['full_status']),
         'state':               StringProp(default=0, fill_brok=['full_status']),
-        'output':              StringProp(default='',fill_brok=['full_status']),
-        'ack_author':          StringProp(default='',fill_brok=['full_status']),
-        'ack_data':            StringProp(default='',fill_brok=['full_status']),
+        'output':              StringProp(default='', fill_brok=['full_status']),
+        'ack_author':          StringProp(default='', fill_brok=['full_status']),
+        'ack_data':            StringProp(default='', fill_brok=['full_status']),
         'escalated':           BoolProp(default=False, fill_brok=['full_status']),
         'contacts_notified':   StringProp(default=0, fill_brok=['full_status']),
         'env':                 StringProp(default={}),
@@ -75,7 +75,7 @@ class Notification(Action):
         'worker':              StringProp(default='none'),
         'reactionner_tag':     StringProp(default='None'),
         'creation_time':       IntegerProp(default=0),
-        'enable_environment_macros': BoolProp(default=0),
+        'enable_environment_macros': BoolProp(default=False),
         # Keep a list of currently active escalations
         'already_start_escalations':  StringProp(default=set()),
 
@@ -95,13 +95,14 @@ class Notification(Action):
         'SERVICENOTIFICATIONID':    'id'
     }
 
-    def __init__(self, type='PROBLEM' , status='scheduled', command='UNSET', command_call=None, ref=None, contact=None, t_to_go=0, \
-                     contact_name='', host_name='', service_description='',
-                     reason_type=1, state=0, ack_author='', ack_data='', \
-                     escalated=False, contacts_notified=0, \
-                     start_time=0, end_time=0, notification_type=0, id=None, \
-                     notif_nb=1, timeout=10, env={}, module_type='fork', \
-                     reactionner_tag='None', enable_environment_macros=0):
+    def __init__(self, type='PROBLEM', status='scheduled', command='UNSET',
+                 command_call=None, ref=None, contact=None, t_to_go=0,
+                 contact_name='', host_name='', service_description='',
+                 reason_type=1, state=0, ack_author='', ack_data='',
+                 escalated=False, contacts_notified=0,
+                 start_time=0, end_time=0, notification_type=0, id=None,
+                 notif_nb=1, timeout=10, env={}, module_type='fork',
+                 reactionner_tag='None', enable_environment_macros=0):
 
         self.is_a = 'notification'
         self.type = type
@@ -124,16 +125,15 @@ class Notification(Action):
         # Set host_name and description from the ref
         try:
             self.host_name = self.ref.host_name
-        except:
+        except Exception:
             self.host_name = host_name
         try:
             self.service_description = self.ref.service_description
-        except:
+        except Exception:
             self.service_description = service_description
 
         self.env = env
         self.module_type = module_type
-        #self.ref_type = ref_type
         self.t_to_go = t_to_go
         self.notif_nb = notif_nb
         self.contact = contact
@@ -162,8 +162,10 @@ class Notification(Action):
         # We create a dummy check with nothing in it, just defaults values
         return self.copy_shell__(Notification('', '', '', '', '', '', '', id=self.id))
 
+
     def is_launchable(self, t):
         return t >= self.t_to_go
+
 
     def is_administrative(self):
         if self.type in ('PROBLEM', 'RECOVERY'):
@@ -171,18 +173,20 @@ class Notification(Action):
         else:
             return True
 
+
     def __str__(self):
-        return "Notification %d status:%s command:%s ref:%s t_to_go:%s" % (self.id, self.status, self.command, getattr(self, 'ref', 'unknown'), time.asctime(time.localtime(self.t_to_go)))
+        return "Notification %d status:%s command:%s ref:%s t_to_go:%s" % \
+               (self.id, self.status, self.command, getattr(self, 'ref', 'unknown'),
+                time.asctime(time.localtime(self.t_to_go)))
+
 
     def get_id(self):
         return self.id
 
+
     def get_return_from(self, n):
         self.exit_status = n.exit_status
         self.execution_time = n.execution_time
-        #self.output = c.output
-        #self.check_time = c.check_time
-        #self.execution_time = c.execution_time
 
 
     # Fill data with info of item by looking at brok_type
@@ -194,6 +198,7 @@ class Notification(Action):
             if brok_type in entry.fill_brok:
                 data[prop] = getattr(self, prop)
 
+
     # Get a brok with initial status
     def get_initial_status_brok(self):
         data = {'id': self.id}
@@ -201,6 +206,7 @@ class Notification(Action):
         self.fill_data_brok_from(data, 'full_status')
         b = Brok('notification_raise', data)
         return b
+
 
     # Call by pickle for dataify the comment
     # because we DO NOT WANT REF in this pickleisation!
@@ -213,6 +219,7 @@ class Notification(Action):
                 res[prop] = getattr(self, prop)
 
         return res
+
 
     # Inverted function of getstate
     def __setstate__(self, state):

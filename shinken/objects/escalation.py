@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -29,8 +29,10 @@ from shinken.util import strip_and_uniq
 from shinken.property import BoolProp, IntegerProp, StringProp, ListProp
 from shinken.log import logger
 
-_special_properties = ('contacts', 'contact_groups', 'first_notification_time', 'last_notification_time')
-_special_properties_time_based = ('contacts', 'contact_groups', 'first_notification', 'last_notification')
+_special_properties = ('contacts', 'contact_groups',
+                       'first_notification_time', 'last_notification_time')
+_special_properties_time_based = ('contacts', 'contact_groups',
+                                  'first_notification', 'last_notification')
 
 
 class Escalation(Item):
@@ -46,11 +48,11 @@ class Escalation(Item):
         'last_notification_time': IntegerProp(),
         # by default don't use the notification_interval defined in
         # the escalation, but the one defined by the object
-        'notification_interval': IntegerProp(default='-1'),
+        'notification_interval': IntegerProp(default=-1),
         'escalation_period':    StringProp(default=''),
-        'escalation_options':   ListProp(default='d,u,r,w,c'),
-        'contacts':             StringProp(),
-        'contact_groups':       StringProp(),
+        'escalation_options':   ListProp(default=['d', 'u', 'r', 'w', 'c'], split_on_coma=True),
+        'contacts':             ListProp(default=[], split_on_coma=True),
+        'contact_groups':       ListProp(default=[], split_on_coma=True),
     })
 
     running_properties = Item.running_properties.copy()
@@ -82,7 +84,7 @@ class Escalation(Item):
             if notif_number < self.first_notification:
                 return False
 
-            #self.last_notification = 0 mean no end
+            # self.last_notification = 0 mean no end
             if self.last_notification != 0 and notif_number > self.last_notification:
                 return False
         # Else we are time based, we must check for the good value
@@ -92,7 +94,8 @@ class Escalation(Item):
                 return False
 
             # self.last_notification = 0 mean no end
-            if self.last_notification_time != 0 and in_notif_time > self.last_notification_time * interval:
+            if self.last_notification_time != 0 and \
+                    in_notif_time > self.last_notification_time * interval:
                 return False
 
         # If our status is not good, we bail out too
@@ -109,8 +112,8 @@ class Escalation(Item):
     # t = the reference time
     def get_next_notif_time(self, t_wished, status, creation_time, interval):
         small_states = {'WARNING': 'w', 'UNKNOWN': 'u', 'CRITICAL': 'c',
-             'RECOVERY': 'r', 'FLAPPING': 'f', 'DOWNTIME': 's',
-             'DOWN': 'd', 'UNREACHABLE': 'u', 'OK': 'o', 'UP': 'o'}
+                        'RECOVERY': 'r', 'FLAPPING': 'f', 'DOWNTIME': 's',
+                        'DOWN': 'd', 'UNREACHABLE': 'u', 'OK': 'o', 'UP': 'o'}
 
         # If we are not time based, we bail out!
         if not self.time_based:
@@ -134,6 +137,7 @@ class Escalation(Item):
         # Ok so I ask for my start as a possibility for the next notification time
         return start
 
+
     # Check is required prop are set:
     # template are always correct
     # contacts OR contactgroups is need
@@ -151,7 +155,7 @@ class Escalation(Item):
         for prop, entry in cls.properties.items():
             if prop not in special_properties:
                 if not hasattr(self, prop) and entry.required:
-                    logger.info('%s: I do not have %s' % (self.get_name(), prop))
+                    logger.info('%s: I do not have %s', self.get_name(), prop)
                     state = False  # Bad boy...
 
         # Raised all previously saw errors like unknown contacts and co
@@ -162,23 +166,23 @@ class Escalation(Item):
 
         # Ok now we manage special cases...
         if not hasattr(self, 'contacts') and not hasattr(self, 'contact_groups'):
-            logger.info('%s: I do not have contacts nor contact_groups' % self.get_name())
+            logger.info('%s: I do not have contacts nor contact_groups', self.get_name())
             state = False
 
         # If time_based or not, we do not check all properties
         if self.time_based:
             if not hasattr(self, 'first_notification_time'):
-                logger.info('%s: I do not have first_notification_time' % self.get_name())
+                logger.info('%s: I do not have first_notification_time', self.get_name())
                 state = False
             if not hasattr(self, 'last_notification_time'):
-                logger.info('%s: I do not have last_notification_time' % self.get_name())
+                logger.info('%s: I do not have last_notification_time', self.get_name())
                 state = False
         else:  # we check classical properties
             if not hasattr(self, 'first_notification'):
-                logger.info('%s: I do not have first_notification' % self.get_name())
+                logger.info('%s: I do not have first_notification', self.get_name())
                 state = False
             if not hasattr(self, 'last_notification'):
-                logger.info('%s: I do not have last_notification' % self.get_name())
+                logger.info('%s: I do not have last_notification', self.get_name())
                 state = False
 
         return state
@@ -195,7 +199,7 @@ class Escalations(Items):
         self.linkify_es_by_h(hosts)
 
     def add_escalation(self, es):
-        self.items[es.id] = es
+        self.add_item(es)
 
     # Will register escalations into service.escalations
     def linkify_es_by_s(self, services):
@@ -207,37 +211,42 @@ class Escalations(Items):
             if '' in (es_hname.strip(), sdesc.strip()):
                 continue
             for hname in strip_and_uniq(es_hname.split(',')):
-                for sname in strip_and_uniq(sdesc.split(',')):
-                    s = services.find_srv_by_name_and_hostname(hname, sname)
-                    if s is not None:
-                        #print "Linking service", s.get_name(), 'with me', es.get_name()
-                        s.escalations.append(es)
-                                #print "Now service", s.get_name(), 'have', s.escalations
-
+                if sdesc.strip() == '*':
+                    slist = services.find_srvs_by_hostname(hname)
+                    if slist is not None:
+                        for s in slist:
+                            s.escalations.append(es)
+                else:
+                    for sname in strip_and_uniq(sdesc.split(',')):
+                        s = services.find_srv_by_name_and_hostname(hname, sname)
+                        if s is not None:
+                            # print "Linking service", s.get_name(), 'with me', es.get_name()
+                            s.escalations.append(es)
+                            # print "Now service", s.get_name(), 'have', s.escalations
 
     # Will register escalations into host.escalations
     def linkify_es_by_h(self, hosts):
         for es in self:
             # If no host, no hope of having a service
             if (not hasattr(es, 'host_name') or es.host_name.strip() == ''
-                    or (hasattr(es, 'service_description') and es.service_description.strip() != '')):
+                    or (hasattr(es, 'service_description')
+                        and es.service_description.strip() != '')):
                 continue
             # I must be NOT a escalation on for service
             for hname in strip_and_uniq(es.host_name.split(',')):
                 h = hosts.find_by_name(hname)
                 if h is not None:
-                    #print "Linking host", h.get_name(), 'with me', es.get_name()
+                    # print "Linking host", h.get_name(), 'with me', es.get_name()
                     h.escalations.append(es)
-                    #print "Now host", h.get_name(), 'have', h.escalations
-
+                    # print "Now host", h.get_name(), 'have', h.escalations
 
     # We look for contacts property in contacts and
     def explode(self, hosts, hostgroups, contactgroups):
+        for i in self:
+            # items::explode_host_groups_into_hosts
+            # take all hosts from our hostgroup_name into our host_name property
+            self.explode_host_groups_into_hosts(i, hosts, hostgroups)
 
-        # items::explode_host_groups_into_hosts
-        # take all hosts from our hostgroup_name into our host_name property
-        self.explode_host_groups_into_hosts(hosts, hostgroups)
-
-        # items::explode_contact_groups_into_contacts
-        # take all contacts from our contact_groups into our contact property
-        self.explode_contact_groups_into_contacts(contactgroups)
+            # items::explode_contact_groups_into_contacts
+            # take all contacts from our contact_groups into our contact property
+            self.explode_contact_groups_into_contacts(i, contactgroups)

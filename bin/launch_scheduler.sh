@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -23,8 +23,8 @@
 
 
 DIR="$(cd $(dirname "$0"); pwd)"
-BIN="$DIR"/../bin
+BIN="$DIR"/../shinken/bin
 ETC="$DIR"/../etc
 
 echo "Launching Scheduler (that is only in charge of scheduling)"
-"$BIN"/shinken-scheduler -d -c "$ETC"/daemons/schedulerd.ini
+"$BIN"/shinken_scheduler.py -d -c "$ETC"/daemons/schedulerd.ini

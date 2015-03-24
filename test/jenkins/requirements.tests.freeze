@@ -1,5 +1,5 @@
 argparse==1.2.1
-coverage==3.5.1
+coverage==3.7
 logilab-astng==0.23.1
 logilab-common==0.57.1
 nose==1.1.2
@@ -10,3 +10,6 @@ pymongo==2.5
 distribute==0.6.24
 wsgiref==0.1.2
 pycurl
+importlib
+mock
+unittest2

@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Hartmut Goebel, h.goebel@goebel-consult.de
@@ -23,13 +22,14 @@
 Test shinken.property
 """
 
-import unittest
 
 import __import_shinken
-import shinken.property
+
+import shinken
 from shinken.property import none_object
 
-from shinken_test import *
+from shinken_test import ShinkenTest, unittest
+
 
 
 class PropertyTests:
@@ -167,7 +167,16 @@ class TestListProp(PropertyTests, ShinkenTest):
         p = self.prop_class()
         self.assertEqual(p.pythonize(""), [])
         self.assertEqual(p.pythonize("1,2,3"), ["1", "2", "3"])
+        # Default is to split on coma for list also.
+        self.assertEquals(p.pythonize(["1,2,3", "4,5,6"]), ["1","2","3", "4","5","6"])
+
+    def test_pythonize_nosplit(self):
+        p = self.prop_class(split_on_coma=False)
+        self.assertEqual(p.pythonize(""), [""])
+        self.assertEqual(p.pythonize("1,2,3"), ["1,2,3"])
+        # Default is to split on coma for list also.
         self.assertEquals(p.pythonize(["1,2,3", "4,5,6"]), ["1,2,3", "4,5,6"])
+
 
 
 class TestLogLevelProp(PropertyTests, ShinkenTest):

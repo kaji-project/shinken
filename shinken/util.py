@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #     Gabes Jean, naparuba@gmail.com
 #     Gerhard Lausser, Gerhard.Lausser@consol.de
 #     Gregory Starck, g.starck@gmail.com
@@ -27,7 +27,6 @@ import time
 import re
 import copy
 import sys
-#import shutil
 import os
 import json
 try:
@@ -38,16 +37,15 @@ except ImportError:
 from shinken.macroresolver import MacroResolver
 from shinken.log import logger
 
-#from memoized import memoized
 try:
     stdout_encoding = sys.stdout.encoding
     safe_stdout = (stdout_encoding == 'UTF-8')
 except Exception, exp:
-    logger.error('Encoding detection error= %s' % (exp))
+    logger.error('Encoding detection error= %s', exp)
     safe_stdout = False
 
 
-########### Strings #############
+# ########## Strings #############
 # Try to print strings, but if there is an utf8 error, go in simple ascii mode
 # (Like if the terminal do not have en_US.UTF8 as LANG for example)
 def safe_print(*args):
@@ -59,7 +57,8 @@ def safe_print(*args):
             if safe_stdout:
                 s = unicode(e, 'utf8', errors='ignore')
             else:
-                s = e.decode('ascii', 'replace').encode('ascii', 'replace').decode('ascii', 'replace')
+                s = e.decode('ascii', 'replace').encode('ascii', 'replace').\
+                    decode('ascii', 'replace')
             l.append(s)
         # Same for unicode, but skip the unicode pass
         elif isinstance(e, unicode):
@@ -139,6 +138,8 @@ def jsonify_r(obj):
         try:
             if isinstance(v, set):
                 v = list(v)
+            if isinstance(v, list):
+                v = sorted(v)
             json.dumps(v)
             res[prop] = v
         except Exception, exp:
@@ -149,29 +150,30 @@ def jsonify_r(obj):
                     if t == 'CommandCall':
                         try:
                             lst.append(_t.call)
-                        except:
+                        except Exception:
                             pass
                         continue
-                    if t and hasattr(_t, t+'_name'):
-                        lst.append(getattr(_t, t+'_name'))
+                    if t and hasattr(_t, t + '_name'):
+                        lst.append(getattr(_t, t + '_name'))
                     else:
-                        print "CANNOT MANAGE OBJECT", _t, type(_t), t
+                        pass
+                        # print "CANNOT MANAGE OBJECT", _t, type(_t), t
                 res[prop] = lst
             else:
                 t = getattr(v.__class__, 'my_type', '')
                 if t == 'CommandCall':
                     try:
                         res[prop] = v.call
-                    except:
+                    except Exception:
                         pass
                     continue
-                if t and hasattr(v, t+'_name'):
-                    res[prop] = getattr(v, t+'_name')
-                else:
-                    print "CANNOT MANAGE OBJECT", v, type(v), t
+                if t and hasattr(v, t + '_name'):
+                    res[prop] = getattr(v, t + '_name')
+                # else:
+                #    print "CANNOT MANAGE OBJECT", v, type(v), t
     return res
 
-################################### TIME ##################################
+# ################################## TIME ##################################
 # @memoized
 def get_end_of_day(year, month_id, day):
     end_time = (year, month_id, day, 23, 59, 59, 0, 0, -1)
@@ -192,7 +194,7 @@ def get_day(t):
 # Same but for week day
 def get_wday(t):
     t_lt = time.localtime(t)
-    return  t_lt.tm_wday
+    return t_lt.tm_wday
 
 
 # @memoized
@@ -225,7 +227,7 @@ def format_t_into_dhms_format(t):
     return '%sd %sh %sm %ss' % (d, h, m, s)
 
 
-################################# Pythonization ###########################
+# ################################ Pythonization ###########################
 # first change to float so manage for example 25.0 to 25
 def to_int(val):
     return int(float(val))
@@ -248,6 +250,15 @@ def to_split(val, split_on_coma=True):
     if val == ['']:
         val = []
     return val
+
+
+def list_split(val, split_on_coma=True):
+    if not split_on_coma:
+        return val
+    new_val = []
+    for x in val:
+        new_val.extend(x.split(','))
+    return new_val
 
 
 def to_best_int_float(val):
@@ -292,10 +303,10 @@ def from_float_to_int(val):
     return val
 
 
-### Functions for brok_transformations
-### They take 2 parameters: ref, and a value
-### ref is the item like a service, and value
-### if the value to preprocess
+# Functions for brok_transformations
+# They take 2 parameters: ref, and a value
+# ref is the item like a service, and value
+# if the value to preprocess
 
 # Just a string list of all names, with ,
 def to_list_string_of_names(ref, tab):
@@ -397,7 +408,7 @@ def unique_value(val):
         return val
 
 
-###################### Sorting ################
+# ##################### Sorting ################
 def scheduler_no_spare_first(x, y):
     if x.spare and not y.spare:
         return 1
@@ -407,7 +418,7 @@ def scheduler_no_spare_first(x, y):
         return -1
 
 
-#-1 is x first, 0 equal, 1 is y first
+# -1 is x first, 0 equal, 1 is y first
 def alive_then_spare_then_deads(x, y):
     # First are alive
     if x.alive and not y.alive:
@@ -427,7 +438,7 @@ def alive_then_spare_then_deads(x, y):
     return 0
 
 
-#-1 is x first, 0 equal, 1 is y first
+# -1 is x first, 0 equal, 1 is y first
 def sort_by_ids(x, y):
     if x.id < y.id:
         return -1
@@ -468,7 +479,7 @@ def nighty_five_percent(t):
     return (reduce_avg, reduce_min, reduce_max)
 
 
-##################### Cleaning ##############
+# #################### Cleaning ##############
 def strip_and_uniq(tab):
     new_tab = set()
     for elt in tab:
@@ -478,7 +489,7 @@ def strip_and_uniq(tab):
     return list(new_tab)
 
 
-#################### Pattern change application (mainly for host) #######
+# ################### Pattern change application (mainly for host) #######
 
 
 def expand_xy_pattern(pattern):
@@ -523,19 +534,19 @@ def got_generation_rule_pattern_change(xy_couples):
 # rule = [1, '[1-5]', [2, '[1-4]', [3, '[1-3]', []]]]
 # output = Unit 3 Port 2 Admin 1
 def apply_change_recursive_pattern_change(s, rule):
-    #print "Try to change %s" % s, 'with', rule
-    #new_s = s
+    # print "Try to change %s" % s, 'with', rule
+    # new_s = s
     (i, m, t) = rule
-    #print "replace %s by %s" % (r'%s' % m, str(i)), 'in', s
+    # print "replace %s by %s" % (r'%s' % m, str(i)), 'in', s
     s = s.replace(r'%s' % m, str(i))
-    #print "And got", s
+    # print "And got", s
     if t == []:
         return s
     return apply_change_recursive_pattern_change(s, t)
 
 # For service generator, get dict from a _custom properties
 # as _disks   C$(80%!90%),D$(80%!90%)$,E$(80%!90%)$
-#return {'C': '80%!90%', 'D': '80%!90%', 'E': '80%!90%'}
+# return {'C': '80%!90%', 'D': '80%!90%', 'E': '80%!90%'}
 # And if we have a key that look like [X-Y] we will expand it
 # into Y-X+1 keys
 GET_KEY_VALUE_SEQUENCE_ERROR_NOERROR = 0
@@ -661,13 +672,13 @@ def get_key_value_sequence(entry, default_value=None):
                 # keys_to_del.append(orig_key)
 
                 # We search all pattern change rules
-                #rules = got_generation_rule_pattern_change(xy_couples)
+                # rules = got_generation_rule_pattern_change(xy_couples)
                 nodes_set = expand_xy_pattern(orig_key)
                 new_keys = list(nodes_set)
 
                 # Then we apply them all to get ours final keys
                 for new_key in new_keys:
-                #res = apply_change_recursive_pattern_change(orig_key, rule)
+                    # res = apply_change_recursive_pattern_change(orig_key, rule)
                     new_r = {}
                     for key in r:
                         new_r[key] = r[key]
@@ -676,13 +687,13 @@ def get_key_value_sequence(entry, default_value=None):
         else:
             # There were no wildcards
             array2.append(r)
-    #t1 = time.time()
-    #print "***********Diff", t1 -t0
+    # t1 = time.time()
+    # print "***********Diff", t1 -t0
 
     return (array2, GET_KEY_VALUE_SEQUENCE_ERROR_NOERROR)
 
 
-############################### Files management #######################
+# ############################## Files management #######################
 # We got a file like /tmp/toto/toto2/bob.png And we want to be sure the dir
 # /tmp/toto/toto2/ will really exists so we can copy it. Try to make if if need
 # and return True/False if succeed
@@ -695,17 +706,17 @@ def expect_file_dirs(root, path):
     tmp_dir = root
     for d in dirs:
         _d = os.path.join(tmp_dir, d)
-        logger.info('Verify the existence of file %s' % (_d))
+        logger.info('Verify the existence of file %s', _d)
         if not os.path.exists(_d):
             try:
                 os.mkdir(_d)
-            except:
+            except Exception:
                 return False
         tmp_dir = _d
     return True
 
 
-######################## Services/hosts search filters  #######################
+# ####################### Services/hosts search filters  #######################
 # Filters used in services or hosts find_by_filter method
 # Return callback functions which are passed host or service instances, and
 # should return a boolean value that indicates if the inscance mached the
@@ -757,12 +768,12 @@ def filter_host_by_group(group):
     return inner_filter
 
 
-def filter_host_by_template(tpl):
+def filter_host_by_tag(tpl):
 
     def inner_filter(host):
         if host is None:
             return False
-        return tpl in [t.strip() for t in host.use]
+        return tpl in [t.strip() for t in host.tags]
 
     return inner_filter
 
@@ -820,13 +831,12 @@ def filter_service_by_hostgroup_name(group):
     return inner_filter
 
 
-def filter_service_by_host_template_name(tpl):
+def filter_service_by_host_tag_name(tpl):
 
     def inner_filter(service):
         if service is None or service.host is None:
             return False
-        return tpl in [t.strip() for t in service.host.use]
-        
+        return tpl in [t.strip() for t in service.host.tags]
 
     return inner_filter
 
@@ -868,3 +878,10 @@ def filter_service_by_bp_rule_label(label):
         return label in service.labels
 
     return inner_filter
+
+
+def is_complex_expr(expr):
+    for m in '()&|!*':
+        if m in expr:
+            return True
+    return False

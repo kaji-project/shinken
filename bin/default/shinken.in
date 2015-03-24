@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2011:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -129,6 +129,6 @@ RECEIVERDEBUGFILE="$LOG/receiver-debug.log"
 NICENESS=5
 
 # user/group for the var/run rights
-SHINKENUSER=shinken
-SHINKENGROUP=shinken
-HOME=`grep ^$SHINKENUSER: /etc/passwd | cut -d: -f 6`
+#SHINKENUSER=shinken
+#SHINKENGROUP=shinken
+#HOME=`grep ^$SHINKENUSER: /etc/passwd | cut -d: -f 6`

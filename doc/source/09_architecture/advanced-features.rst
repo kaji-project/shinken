@@ -232,7 +232,7 @@ Every one? In fact no. If an administrator got a continental distributed archite
 
 That is where the site/customers management is useful. In Shinken, it's managed by the **realms**.
 
-A realm is a group of resources that will manage hosts or hostgroups. Such a link will be unique: a host cannot be in multiple realms. If you put an hostgroup in a realm, all hosts in this group will be in the realm (unless a host already has the realm set, the host value will be taken).
+A realm is a group of resources that will manage hosts or hostgroups. Such a link will be unique: a host cannot be in multiple realms. If you put a hostgroup in a realm, all hosts in this group will be in the realm (unless a host already has the realm set, the host value will be taken).
 
 A realm is:
  * at least a scheduler
@@ -248,7 +248,7 @@ In a realm, all realm pollers will take all realm schedulers jobs.
 Sub-realms 
 ===========
 
-A realm can have sub-realms. It doesnt change anything for schedulers, but it can be useful for other satellites and spares. Reactionners and brokers are linked to a realm, but they can take jobs from all sub-realms too. This way you can have less reactionners and brokers (like we soon will see).
+A realm can have sub-realms. It doesn't change anything for schedulers, but it can be useful for other satellites and spares. Reactionners and brokers are linked to a realm, but they can take jobs from all sub-realms too. This way you can have less reactionners and brokers (like we soon will see).
 
 The fact that reactionners/brokers (and in fact pollers too) can take jobs from sub-schedulers is decided by the presence of the manage_sub_realms parameter. For pollers the default value is 0, but it's 1 for reactionners/brokers.
 

@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012:
+# Copyright (C) 2009-2014:
 #    Gabes Jean, naparuba@gmail.com
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
@@ -28,16 +28,11 @@ about the configuration part. Parameters are merged in Service so it's
 no use in running part
 """
 
-import time
 
 from item import Item, Items
 
 from shinken.autoslots import AutoSlots
-from shinken.util import format_t_into_dhms_format, to_hostnames_list, get_obj_name, to_svc_hst_distinct_lists, to_list_string_of_names
-from shinken.property import BoolProp, IntegerProp, FloatProp, CharProp, StringProp, ListProp
-from shinken.macroresolver import MacroResolver
-from shinken.eventhandler import EventHandler
-from shinken.log import logger
+from shinken.property import StringProp, ListProp
 
 
 class ServiceExtInfo(Item):
@@ -52,7 +47,8 @@ class ServiceExtInfo(Item):
     # *required: is required in conf
     # *default: default value if no set in conf
     # *pythonize: function to call when transforming string to python object
-    # *fill_brok: if set, send to broker. there are two categories: full_status for initial and update status, check_result for check results
+    # *fill_brok: if set, send to broker. there are two categories:
+    #   full_status for initial and update status, check_result for check results
     # *no_slots: do not take this property for __slots__
     #  Only for the initial call
     # conf_send_preparation: if set, will pass the property to this function. It's used to "flatten"
@@ -61,7 +57,7 @@ class ServiceExtInfo(Item):
     #  the major times it will be to flatten the data (like realm_name instead of the realm object).
     properties = Item.properties.copy()
     properties.update({
-        'host_name':            ListProp(),
+        'host_name':            StringProp(),
         'service_description':  StringProp(),
         'notes':                StringProp(default=''),
         'notes_url':            StringProp(default=''),
@@ -129,7 +125,7 @@ class ServicesExtInfo(Items):
     # Merge extended host information into host
     def merge(self, services):
         for ei in self:
-            if hasattr(ei, 'register') and getattr(ei, 'register') == '0':
+            if hasattr(ei, 'register') and not getattr(ei, 'register'):
                 # We don't have to merge template
                 continue
             hosts_names = ei.get_name().split(",")

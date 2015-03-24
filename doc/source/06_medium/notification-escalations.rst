@@ -13,7 +13,7 @@ Escalations
 
 Shinken supports optional escalation of contact notifications for hosts and services. Escalation of host and service notifications is accomplished by defining :ref:`escalations <medium/notification-escalations>` and call them from your hosts and services definitions.
 
-.. tip::  Legacy Nagios host_escalations and service_escalations objects are still managed, but it's adviced to migrate and simplify your configuration with simple escalations objects.
+.. tip::  Legacy Nagios host_escalations and service_escalations objects are still managed, but it's advised to migrate and simplify your configuration with simple escalations objects.
 
 
 Definition and sample 
@@ -34,7 +34,7 @@ Notifications are escalated if and only if one or more escalation linked to your
   }
   
   
-And then you can call it from a service (or an host):
+And then you can call it from a service (or a host):
   
 
 ::
