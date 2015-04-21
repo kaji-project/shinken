@@ -11,6 +11,8 @@ centos_7:
         - sphinx
 debian_8:
     debian: debian
+debian_7:
+    debian: debian
 ubuntu_10.04:
     debian: debian.lucid
 ubuntu_12.04:
