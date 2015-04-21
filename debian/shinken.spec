@@ -4,7 +4,7 @@
 Summary:        Python Monitoring tool
 Name:           shinken
 Version:        2.2
-Release:        1.4kaji0.2
+Release:        1.5kaji0.2
 URL:            http://www.%{name}-monitoring.org
 Source0:        http://www.%{name}-monitoring.org/pub/%{name}_%{version}.orig.tar.gz
 License:        AGPLv3+
@@ -119,9 +119,11 @@ install -d -m0755 %{buildroot}%{_localstatedir}/lib/%{name}
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/%{name}/share
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/%{name}/doc
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/%{name}/inventory
-#run
+# run
 mkdir -p %{buildroot}%{_localstatedir}/run/
 install -d -m0755 %{buildroot}%{_localstatedir}/run/%{name}
+# etc
+mkdir -p %{buildroot}%{_sysconfdir}/shinken/adagios
 
 %clean
 
@@ -184,6 +186,7 @@ fi
 # arbiter
 %{_sbindir}/%{name}-arbiter
 #%config(noreplace) %{_sysconfdir}/%{name}
+%config(noreplace) %{_sysconfdir}/%{name}/adagios/
 %config(noreplace) %{_sysconfdir}/%{name}/shinken.cfg
 %config(noreplace) %{_sysconfdir}/%{name}/hosts/
 %config(noreplace) %{_sysconfdir}/%{name}/packs/
